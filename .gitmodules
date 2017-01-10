@@ -1,0 +1,7 @@
+ 
+[submodule "lib/cppcodec"]
+	path = lib/cppcodec
+	url = https://github.com/tplgy/cppcodec.git
+[submodule "lib/crcpp"]
+	path = lib/crcpp
+	url = https://github.com/d-bahr/CRCpp.git
