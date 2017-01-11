@@ -20,7 +20,7 @@ RTS (pause flow from WSPRlite to computer) is deliberately not implemented in th
 
 CTS (pause flow from computer to WSPRlite) does not appear to work correctly, at least on Linux. This might be a bug in the libserialport library. Workaround: only send one message at a time to the WSPRlite, wait for the response before sending the next message.
 
-Testpoints TP1 and TP2 on the WSPRlite board are for the RX and TX pins of the serial bridge.
+Testpoints TP1 and TP2 on the WSPRlite board are connected to the RX and TX pins for the serial connection.
 
 # Message format
 
@@ -38,7 +38,7 @@ The bytes which are sent through the serial connection for a single message are:
     start ::= '\x01'
     end ::= '\x04'
     esc ::= '\x10'
-    ; encoded version of each controlByte is obtained by adding 0x80 to the controlByte
+    ; The escaped version of each controlByte is obtained by adding 0x80 to the controlByte
     escapedByte ::= '\x81' | '\x84' | '\x90' 
 
 After unescaping `escapedMessage`:
@@ -78,7 +78,9 @@ Indicates that the command was successful and has returned some data. The meanin
 
 Retrieves information about firmware and hardware version. 
 
-No command data. Reply: ResponseData
+No command data.
+
+Reply: ResponseData
 
     msgData ::= deviceVersion firmwareVersion
     deviceVersion ::= productId productRevision bootloaderVersion
@@ -120,7 +122,9 @@ Reboots the device. No command data. Reply: ACK.
 
 Gets some information about what the WSPRlite is currently doing. Supported by firmware v1.0.4 and later, limited support in earlier versions.
 
-No command data. Reply: ResponseData
+No command data.
+
+Reply: ResponseData
 
     msgData ::= deviceMode | deviceMode deviceModeSub
     deviceMode ::= uint16
@@ -136,7 +140,7 @@ Sets the current device state.
 
 E.g. setting to DeviceMode::WSPR_Active has the same effect as pressing the button on the WSPRlite. (This is currently unimplemented in the config program, since the config program does not yet have a way of checking the accuracy of the computer time.)
 
-For most device modes, command data is:
+Command data for most device modes is:
 
     msgData ::= deviceMode
     deviceMode ::= uint16
@@ -147,7 +151,7 @@ For DeviceMode::Test_ConstantTx, which temporarily makes the WSPRlite emit a con
     frequency ::= uint64
     paBias ::= uint16
 
-`frequency` is the output frequency in Hz. `paBias` is the amplifier bias (PWM duty cycle, range 0-1000), which influences output power.
+`frequency` is the output frequency in Hz. `paBias` controls the gate bias for the power amplifier stage, which affects the output power of the WSPRlite. It is a PWM duty cycle, range 0-1000.
 
 Reply: ACK or NACK
 
@@ -155,7 +159,9 @@ Reply: ACK or NACK
 
 Checks whether the device is in bootloader (firmware update) mode.
 
-No command data. Reply: ResponseData.
+No command data.
+
+Reply: ResponseData.
 
     msgData ::= bootloaderMode
     bootloaderMode ::= '\x00' | '\x01' | '\x02'
@@ -171,7 +177,7 @@ No command data. Reply: ResponseData.
 ### Bootloader_CRC,
 ### Bootloader_ProgramResetAddr
 
-Currently undocumented since they are likely of limited interest. Note that you might break your WSPRlite if you use these incorrectly, to the extent of requiring a PICkit or similar item to fix it.
+Currently undocumented since they are likely of limited interest. Note that you might break your WSPRlite if you use these incorrectly, to the extent of needing to use a PICkit or similar to fix it.
 
 ### DumpEEPROM
 ### WSPR_GetTime
