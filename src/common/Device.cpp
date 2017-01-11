@@ -200,7 +200,9 @@ std::string Connection::getLastErrorMsg()
 {
 	std::lock_guard<std::recursive_mutex> lksp(spMutex);
 	char* msg = sp_last_error_message();
-	std::string msgStr = msg;
+	std::string msgStr = "";
+	if (msg)
+		msgStr = msg;
 	sp_free_error_message(msg);
 	return msgStr;
 }
@@ -284,12 +286,7 @@ void Connection::connect(const SerialPort &port)
 		throw std::runtime_error("Error opening serial port: could not copy sp_port");
 	ret = sp_open(spPort, SP_MODE_READ_WRITE);
 	if (ret!=SP_OK)
-	{
-		char *err = sp_last_error_message();
-		std::string msg = std::string("Error opening serial port: sp_open failed. ") + err;
-		sp_free_error_message(err);
-		throw std::runtime_error(msg);
-	}
+		throw std::runtime_error("Error opening serial port: sp_open failed. " + getLastErrorMsg());
 
 	ret = sp_set_baudrate(spPort, 1000000);
 	if (ret!=SP_OK)

@@ -55,7 +55,10 @@ SerialPort::~SerialPort()
 
 std::string SerialPort::GetName() const
 {
-	return sp_get_port_name(spPort);
+	const char* txt = sp_get_port_name(spPort);
+	if (!txt)
+		return "";
+	return txt;
 }
 
 std::string SerialPort::GetDesc() const
