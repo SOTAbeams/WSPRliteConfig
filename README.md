@@ -16,28 +16,23 @@ The config program as published on dxplorer.net is statically linked, so should 
 
 ### Linux
 
-If the config program runs but cannot communicate with the WSPRlite, you may need to add yourself to a specific group (e.g. dialout or uucp) so that you can access the USB device. See doc/linux-serial.md for details.
+If the config program runs but cannot communicate with the WSPRlite, you may need to add yourself to a specific group (e.g. dialout or uucp) so that you can access the USB device. See [doc/linux-serial.md](doc/linux-serial.md) for details.
 
 ## Building
 
-First, obtain the source code:
+### Dependencies
+
+* cmake
+* g++
+* git-core
+* wxWidgets (package name is usually something like libwxgtk3.0-dev)
+* libserialport (v0.1.1 or later). Note that the current Debian stable version of libserialport is too old (v0.1.0), so on some distributions you may need to compile it from source code.
+
+### Getting the source code
 
     git clone https://github.com/SOTAbeams/WSPRliteConfig.git
     cd WSPRliteConfig
     git submodule update --init
-
-
-### Dependencies
-
-```
-cmake
-g++
-git-core
-wxWidgets (package name is usually something like libwxgtk3.0-dev)
-libserialport (v0.1.1 or later)
-```
-
-Note that the current Debian stable version of libserialport is too old (v0.1.0), so on some distributions you may need to compile it from source code.
 
 ### Linux
 
