@@ -8,9 +8,9 @@ Next, check whether you can write to the device:
 
     touch /dev/ttyUSB0
 
-If this works fine, you have an unknown problem. Try looking at the last few lines of `dmesg`.
+If this works fine, the problem is not permissions, it is something else. Try running `dmesg` and looking at the last few lines of the output.
 
-If this comes up with an error, check the permissions of the device and which groups you belong to:
+If `touch` produces an error, check the permissions of the device and which groups you belong to:
 
     ls -l /dev/ttyUSB0
     groups
@@ -35,7 +35,7 @@ $ groups
 wheel floppy audio cdrom video games usb users plugdev portage johnsmith
 ```
 
-The permissions are `rw-rw----`, which mean you need to be in the group that owns the USB device (in this case, `uucp` which is not listed as one of your groups) in order to use it.
+The permissions are `rw-rw----`, which mean you need to be in the group that owns the USB device (in this case `uucp`, on other distributions it may be `dialout` or something else) in order to use it.
 
 Assuming your username is johnsmith and the group that owns the USB device is uucp, run:
 
