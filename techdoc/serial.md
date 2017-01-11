@@ -48,7 +48,7 @@ After unescaping `escapedMessage`:
     msgData ::= (uint8)*
     checksum ::= uint32
 
-The checksum is the CRC32 of `msgData`.
+The checksum is the CRC32 of `msgType msgData`.
 
 A list of `msgType` values can be found in src/common/device/MsgType.hpp
 
