@@ -1,5 +1,6 @@
 #include "Ctl_BandSelect.hpp"
 #include <random>
+#include <chrono>
 
 bool Ctl_BandSelect::Band::containsFreq(uint32_t f)
 {
@@ -12,7 +13,8 @@ txt(txt_), centreFreq(centreFreq_), bandId(bandId_)
 {}
 
 Ctl_BandSelect::Ctl_BandSelect(wxWindow *parent, wxWindowID id) :
-wxComboBox(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY | wxCB_DROPDOWN)
+wxComboBox(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY | wxCB_DROPDOWN),
+rng(std::chrono::high_resolution_clock::now().time_since_epoch().count())
 {
 	bands.push_back(Band(_("20m / 14 MHz"), 14097100ULL, WsprBand::Band_20m));
 	bands.push_back(Band(_("30m / 10 MHz"), 10140200ULL, WsprBand::Band_30m));
@@ -54,11 +56,9 @@ uint64_t Ctl_BandSelect::getFreq()
 {
 	if (!getSelectedBandInfo()->containsFreq(freq))
 	{
-		std::random_device rd;
-		std::mt19937 gen(rd());
 		int bandSize = 100;
 		std::uniform_int_distribution<> randDist(-bandSize/2, bandSize/2);
-		freq = getSelectedBandInfo()->centreFreq + randDist(gen);
+		freq = getSelectedBandInfo()->centreFreq + randDist(rng);
 	}
 	return freq;
 }

@@ -5,11 +5,15 @@
 #ifndef WX_PRECOMP
 	#include <wx/wx.h>
 #endif
+#include <random>
 
 #include "common/Device.hpp"
 
 class Ctl_BandSelect : public wxComboBox
 {
+protected:
+	std::mt19937 rng;
+
 public:
 	class Band
 	{
