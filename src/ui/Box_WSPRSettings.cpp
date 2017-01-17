@@ -120,7 +120,20 @@ void Box_WSPRSettings::Enable(bool status)
 
 void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 {
-	cfg.callsign = std::string(txt_callsign->GetValue().Upper());
+
+	std::string newCallsign = std::string(txt_callsign->GetValue().Upper());
+	if (cfg.callsign!=newCallsign)
+		cfg.changeCounter++;
+
+	if (cfg.changeCounter<=1)
+	{
+		// This is the first time configuring this particular WSPRlite, so a
+		// new random tx frequency was generated when setFields was called.
+		// Increment changeCounter to indicate that this has been done.
+		cfg.changeCounter = 2;
+	}
+
+	cfg.callsign = newCallsign;
 	cfg.locator = std::string(txt_locator->GetValue());
 	cfg.band = ctl_band->getBandId();
 	cfg.outputPower_dBm = ctl_outputPowerSelect->getdBm();
@@ -159,6 +172,10 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 	ctl_maxDuration->SetValue(StrUtil::doubleToString((double)cfg.maxRuntime/(24*3600)));
 	ctl_txRate->SetValue(std::to_string(cfg.transmitPercent));
 	ctl_band->setFreq(cfg.transmitFreq);
+	if (cfg.changeCounter<=1)
+	{
+		ctl_band->genFreq();
+	}
 	updateTxFreqText();
 	updateStatsLink();
 }

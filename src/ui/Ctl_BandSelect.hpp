@@ -33,6 +33,7 @@ public:
 	void setFreq(uint64_t f);
 
 	Band* getSelectedBandInfo();
+	void genFreq();
 	uint64_t getFreq();
 	WsprBand getBandId();
 };

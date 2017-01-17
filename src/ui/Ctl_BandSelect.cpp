@@ -52,13 +52,18 @@ Ctl_BandSelect::Band *Ctl_BandSelect::getSelectedBandInfo()
 	return (Band*)GetClientData(i);
 }
 
+void Ctl_BandSelect::genFreq()
+{
+	int bandSize = 100;
+	std::uniform_int_distribution<> randDist(-bandSize/2, bandSize/2);
+	freq = getSelectedBandInfo()->centreFreq + randDist(rng);
+}
+
 uint64_t Ctl_BandSelect::getFreq()
 {
 	if (!getSelectedBandInfo()->containsFreq(freq))
 	{
-		int bandSize = 100;
-		std::uniform_int_distribution<> randDist(-bandSize/2, bandSize/2);
-		freq = getSelectedBandInfo()->centreFreq + randDist(rng);
+		genFreq();
 	}
 	return freq;
 }

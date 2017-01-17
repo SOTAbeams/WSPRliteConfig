@@ -221,6 +221,7 @@ void WSPRConfigFrame::deviceSave()
 	wsprSettingsBox->validate();
 
 	std::shared_ptr<Task_WSPRSave> task = std::make_shared<Task_WSPRSave>(deviceModel);
+	task->newCfg = deviceModel->config;
 	try
 	{
 		wsprSettingsBox->getFields(task->newCfg);
