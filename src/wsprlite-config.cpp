@@ -20,6 +20,8 @@
 #include <sstream>
 #include <iomanip>
 
+const FirmwareVersion minFirmwareVersionRecommended(1,0,5,20170119);
+
 
 class WSPRConfigApp: public wxApp
 {
@@ -206,8 +208,15 @@ void WSPRConfigFrame::deviceLoad()
 			btn_connect->Enable(true);
 			wsprSettingsBox->setFields(deviceModel->config);
 			WSPRCtlsEnabled(true);
+			if (deviceModel->info.firmwareVersion < minFirmwareVersionRecommended)
+			{
+				wxMessageBox(_("A firmware update has been released which fixes a bug in your WSPRlite. Before adjusting settings, please update the firmware.\n\nVisit http://dxplorer.net/wsprlite/ to download the update and for instructions."), _("Firmware update required"), wxOK | wxICON_WARNING );
+			}
+			else
+			{
+				startStatusUpdate();
+			}
 			updateVersionText();
-			startStatusUpdate();
 		});
 	});
 	deviceModel->taskRunner.enqueue(task);
