@@ -15,9 +15,9 @@ void Box_WSPRSettings::addCtl(wxWindow *window, wxGBPosition pos, wxSizerFlags s
 void Box_WSPRSettings::addFormRow(int row, wxWindow *label, wxWindow *field)
 {
 	if (label)
-		addCtl(label, wxGBPosition(row,0), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT).Border(wxALL, 0));
+		addCtl(label, wxGBPosition(row,0), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT).Border(wxALL, 0).ReserveSpaceEvenIfHidden());
 	if (field)
-		addCtl(field, wxGBPosition(row,1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Expand().Border(wxALL, 0));
+		addCtl(field, wxGBPosition(row,1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Expand().Border(wxALL, 0).ReserveSpaceEvenIfHidden());
 }
 
 void Box_WSPRSettings::addFormRow(int row, wxString label, wxWindow *field)

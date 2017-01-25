@@ -147,7 +147,7 @@ WSPRConfigFrame::WSPRConfigFrame(const wxString& title, const wxPoint& pos, cons
 	msg_firmwareVersion = new wxStaticText(panel_config, wxID_ANY, wxEmptyString);
 	deviceSizer->Add(msg_firmwareVersion,  wxSizerFlags().Expand().Left());
 	msg_devStatus = new wxStaticText(panel_config, wxID_ANY, wxEmptyString);
-	deviceSizer->Add(msg_devStatus, wxSizerFlags().Expand().Left());
+	deviceSizer->Add(msg_devStatus, wxSizerFlags().Expand().Left().ReserveSpaceEvenIfHidden());
 
 	wxBoxSizer* deviceBtnsSizer = new wxBoxSizer(wxHORIZONTAL);
 	deviceBtnsSizer->AddStretchSpacer(1);
