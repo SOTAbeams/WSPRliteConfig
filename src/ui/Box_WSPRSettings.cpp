@@ -4,83 +4,85 @@
 #include "common/dxplorer.hpp"
 #include "common/StrUtil.hpp"
 
-#include <wx/gbsizer.h>
 #include <wx/hyperlink.h>
 #include <wx/valnum.h>
+
+void Box_WSPRSettings::addCtl(wxWindow *window, wxGBPosition pos, wxSizerFlags szFlags)
+{
+	wsprSizer->Add(window, pos, wxDefaultSpan, szFlags.GetFlags(), szFlags.GetBorderInPixels());
+}
+
+void Box_WSPRSettings::addFormRow(int row, wxWindow *label, wxWindow *field)
+{
+	if (label)
+		addCtl(label, wxGBPosition(row,0), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT).Border(wxALL, 0));
+	if (field)
+		addCtl(field, wxGBPosition(row,1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Expand().Border(wxALL, 0));
+}
+
+void Box_WSPRSettings::addFormRow(int row, wxString label, wxWindow *field)
+{
+	addFormRow(row, new wxStaticText(formParent, wxID_ANY, label), field);
+}
 
 Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel_) :
 	wxStaticBoxSizer(wxVERTICAL, parent, _("WSPR settings")),
 	deviceModel(deviceModel_)
 {
-	wxGridBagSizer* wsprSizer = new wxGridBagSizer();
-	Add(wsprSizer, 0, wxEXPAND | wxALL, 10);
+	wsprSizer = new wxGridBagSizer();
+	Add(wsprSizer, wxSizerFlags().Expand().Border(wxALL, 10));
+	formParent = parent;
 
 	int row = 0;
-	txt_callsign = new wxTextCtrl(parent, wxID_ANY);
+	txt_callsign = new wxTextCtrl(formParent, wxID_ANY);
 	txt_callsign->Bind(wxEVT_TEXT, &Box_WSPRSettings::OnCallsignChanged, this);
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Callsign:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(txt_callsign, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
-	row++;
-	txt_locator = new wxTextCtrl(parent, wxID_ANY);
-	txt_locator->SetValidator(MaidenheadValidator());
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Locator:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(txt_locator, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
-	row++;
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Note: the WSPR protocol limits the locator\nto 4 characters (e.g. JN29)")), wxGBPosition(row,1), wxGBSpan(1,1), wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_LEFT, 1);
-	row++;
-	wsprSizer->Add(new wxHyperlinkCtrl(parent, wxID_ANY, _("Find my locator"), "http://qthlocator.free.fr/"), wxGBPosition(row,1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_LEFT, 1);
-	row++;
-	ctl_band = new Ctl_BandSelect(parent, wxID_ANY);
-	ctl_band->Bind(wxEVT_COMBOBOX, &Box_WSPRSettings::OnBandChanged, this);
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Band:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(ctl_band, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
-	row++;
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Transmit frequency:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	msg_freq = new wxStaticText(parent, wxID_ANY, wxEmptyString);
-	wsprSizer->Add(msg_freq, wxGBPosition(row,1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_LEFT, 1);
-	row++;
-	msg_band = new wxStaticText(parent, wxID_ANY, _("External lowpass filter required"));
-	wsprSizer->Add(msg_band, wxGBPosition(row,1), wxGBSpan(1,1), wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_LEFT, 1);
-	row++;
-	/*txt_outPower = new wxTextCtrl(mainPanel, wxID_ANY);
-	wsprSizer->Add(new wxStaticText(mainPanel, wxID_ANY, _("Output power / mW:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(txt_outPower, wxGBPosition(row,1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxEXPAND, 1);
-	row++;*/
-	ctl_outputPowerSelect = new Ctl_OutputPowerSelect(parent, wxID_ANY);
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("WSPRlite output power:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(ctl_outputPowerSelect, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
-	row++;
-	ctl_reportPowerSelect = new Ctl_ReportPowerSelect(parent, wxID_ANY);
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Reported transmit power:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(ctl_reportPowerSelect, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
-	row++;
+	addFormRow(row++, _("Callsign:"), txt_callsign);
 
-	ctl_txRate = new wxTextCtrl(parent, wxID_ANY);
+	txt_locator = new wxTextCtrl(formParent, wxID_ANY);
+	txt_locator->SetValidator(MaidenheadValidator());
+	addFormRow(row++, _("Locator:"), txt_locator);
+
+	addFormRow(row++, nullptr, new wxStaticText(formParent, wxID_ANY, _("Note: the WSPR protocol limits the locator\nto 4 characters (e.g. JN29)")));
+	addCtl(new wxHyperlinkCtrl(formParent, wxID_ANY, _("Find my locator"), "http://qthlocator.free.fr/"), wxGBPosition(row++, 1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Border(wxALL, 0));
+
+	ctl_band = new Ctl_BandSelect(formParent, wxID_ANY);
+	ctl_band->Bind(wxEVT_COMBOBOX, &Box_WSPRSettings::OnBandChanged, this);
+	addFormRow(row++, _("Band:"), ctl_band);
+
+	msg_freq = new wxStaticText(formParent, wxID_ANY, wxEmptyString);
+	addFormRow(row++, _("Transmit frequency:"), msg_freq);
+
+	msg_band = new wxStaticText(formParent, wxID_ANY, _("External lowpass filter required"));
+	addFormRow(row++, nullptr, msg_band);
+
+	ctl_outputPowerSelect = new Ctl_OutputPowerSelect(formParent, wxID_ANY);
+	addFormRow(row++, _("WSPRlite output power:"), ctl_outputPowerSelect);
+
+	ctl_reportPowerSelect = new Ctl_ReportPowerSelect(formParent, wxID_ANY);
+	addFormRow(row++, _("Reported transmit power:"), ctl_reportPowerSelect);
+
+	ctl_txRate = new wxTextCtrl(formParent, wxID_ANY);
 	wxIntegerValidator<int> validator_txRate(&value_txRate, wxNUM_VAL_DEFAULT);
 	validator_txRate.SetRange(1,50);
 	ctl_txRate->SetValidator(validator_txRate);
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Repeat rate (%):")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(ctl_txRate, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
-	//wsprSizer->Add(new wxStaticText(configPanel, wxID_ANY, _("Below 50% recommended")), wxGBPosition(row,2), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_LEFT, 1);
-	row++;
-	ctl_maxDuration = new wxTextCtrl(parent, wxID_ANY);
+	addFormRow(row++, _("Repeat rate (%):"), ctl_txRate);
+
+	ctl_maxDuration = new wxTextCtrl(formParent, wxID_ANY);
 	wxFloatingPointValidator<float> validator_maxDuration(3, &value_maxDuration, wxNUM_VAL_NO_TRAILING_ZEROES);
 	validator_maxDuration.SetRange(0,30);
 	ctl_maxDuration->SetValidator(validator_maxDuration);
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Max run time (days):")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
-	wsprSizer->Add(ctl_maxDuration, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
-	row++;
+	addFormRow(row++, _("Max run time (days):"), ctl_maxDuration);
 
-	wsprSizer->Add(new wxStaticText(parent, wxID_ANY, _("Statistics:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
+	wsprSizer->Add(new wxStaticText(formParent, wxID_ANY, _("Statistics:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
 	wsprStatsSizer = new wxBoxSizer(wxHORIZONTAL);
-	ctl_statsUrl = new wxTextCtrl(parent, wxID_ANY);
+	ctl_statsUrl = new wxTextCtrl(formParent, wxID_ANY);
 	ctl_statsUrl->SetEditable(false);
 	ctl_statsUrl->SetDefaultStyle(wxTextAttr(*wxBLUE));
 	wsprStatsSizer->Add(ctl_statsUrl, wxSizerFlags().Expand().Proportion(1));
-	ctl_statsOpen = new wxButton(parent, wxID_ANY, _("Open in browser"));
+	ctl_statsOpen = new wxButton(formParent, wxID_ANY, _("Open in browser"));
 	ctl_statsOpen->Bind(wxEVT_BUTTON, &Box_WSPRSettings::OnBtnStats, this);
 	wsprStatsSizer->Add(ctl_statsOpen, wxSizerFlags());
-	ctl_statsMsg = new wxStaticText(parent, wxID_ANY, wxEmptyString);
+	ctl_statsMsg = new wxStaticText(formParent, wxID_ANY, wxEmptyString);
 	ctl_statsMsg->Hide();
 	wsprStatsSizer->Add(ctl_statsMsg, 1, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT);
 	wsprSizer->Add(wsprStatsSizer, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);

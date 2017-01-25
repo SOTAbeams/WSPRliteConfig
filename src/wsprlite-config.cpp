@@ -125,12 +125,12 @@ WSPRConfigFrame::WSPRConfigFrame(const wxString& title, const wxPoint& pos, cons
 
 	panel_config = new wxPanel(mainPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 	wxBoxSizer *configSizer = new wxBoxSizer(wxVERTICAL);
-	mainSizer->Add(panel_config, 0, wxEXPAND | wxALL, 0);
+	mainSizer->Add(panel_config, wxSizerFlags().Expand());
 
 	wxStaticBoxSizer* deviceBox = new wxStaticBoxSizer(wxVERTICAL, panel_config, _("Hardware"));
-	configSizer->Add(deviceBox, 0, wxEXPAND | wxALL, 5);
+	configSizer->Add(deviceBox, wxSizerFlags().Expand().Border(wxALL, 6));
 	wxBoxSizer* deviceSizer = new wxBoxSizer(wxVERTICAL);
-	deviceBox->Add(deviceSizer, 0, wxEXPAND | wxALL, 10);
+	deviceBox->Add(deviceSizer, wxSizerFlags().Expand().Border(wxALL, 10));
 
 	deviceSizer->Add(new wxStaticText(panel_config, wxID_ANY, _("Select serial port to use:")));
 
@@ -139,29 +139,29 @@ WSPRConfigFrame::WSPRConfigFrame(const wxString& title, const wxPoint& pos, cons
 	portChoose_list->SetMinClientSize(wxSize(300,-1));
 	portChooseSizer->Add(portChoose_list, wxSizerFlags().Expand().Proportion(1));
 	btn_connect = new wxButton(panel_config, ID_Btn_Connect, _("Connect"));
-	portChooseSizer->Add(btn_connect, wxSizerFlags().Expand().Proportion(0));
-	deviceSizer->Add(portChooseSizer, 0, wxEXPAND | wxALL);
+	portChooseSizer->Add(btn_connect, wxSizerFlags().Expand());
+	deviceSizer->Add(portChooseSizer, wxSizerFlags().Expand());
 
 	deviceSizer->AddSpacer(10);
 
 	msg_firmwareVersion = new wxStaticText(panel_config, wxID_ANY, wxEmptyString);
-	deviceSizer->Add(msg_firmwareVersion, 0, wxEXPAND | wxALL | wxALIGN_LEFT);
+	deviceSizer->Add(msg_firmwareVersion,  wxSizerFlags().Expand().Left());
 	msg_devStatus = new wxStaticText(panel_config, wxID_ANY, wxEmptyString);
-	deviceSizer->Add(msg_devStatus, 1, wxEXPAND | wxALL | wxALIGN_LEFT);
+	deviceSizer->Add(msg_devStatus, wxSizerFlags().Expand().Left());
 
 	wxBoxSizer* deviceBtnsSizer = new wxBoxSizer(wxHORIZONTAL);
 	deviceBtnsSizer->AddStretchSpacer(1);
 	btn_firmwareUpdate = new wxButton(panel_config, ID_Btn_FirmwareUpdate, _("Update firmware"));
-	deviceBtnsSizer->Add(btn_firmwareUpdate, 0, wxALIGN_CENTRE_VERTICAL | wxALL);
+	deviceBtnsSizer->Add(btn_firmwareUpdate, wxSizerFlags().Align(wxALIGN_CENTRE_VERTICAL));
 
 	// This is handy for testing frequency accuracy and power output, but will not be useful for most users so is commented out:
 	/*btn_testRF = new wxButton(panel_config, ID_Btn_TestRF, _("RF output test"));
-	deviceBtnsSizer->Add(btn_testRF, 0, wxALIGN_CENTRE_VERTICAL | wxALL);*/
+	deviceBtnsSizer->Add(btn_testRF, wxSizerFlags().Border(wxALL, 6).Align(wxALIGN_CENTRE_VERTICAL));*/
 
 	deviceBtnsSizer->AddSpacer(10);
 	btn_save = new wxButton(panel_config, ID_SaveWSPR, _("Save WSPR settings"));
-	deviceBtnsSizer->Add(btn_save, 0, wxALIGN_CENTRE_VERTICAL | wxALL);
-	deviceSizer->Add(deviceBtnsSizer, 1, wxEXPAND | wxALL);
+	deviceBtnsSizer->Add(btn_save, wxSizerFlags().Border(wxALL, 6).Align(wxALIGN_CENTRE_VERTICAL));
+	deviceSizer->Add(deviceBtnsSizer, wxSizerFlags().Expand().Proportion(1).Border(wxALL, 6));// TODO: proportion?
 
 	portChoose_list->preferredDesc = "WSPRlite";
 	portChoose_list->UpdatePorts();
@@ -172,7 +172,7 @@ WSPRConfigFrame::WSPRConfigFrame(const wxString& title, const wxPoint& pos, cons
 	};
 
 	wsprSettingsBox = new Box_WSPRSettings(panel_config, deviceModel);
-	configSizer->Add(wsprSettingsBox, 0, wxEXPAND | wxALL, 5);
+	configSizer->Add(wsprSettingsBox, wxSizerFlags().Expand().Border(wxALL, 6));
 
 	panel_config->SetSizerAndFit(configSizer);
 

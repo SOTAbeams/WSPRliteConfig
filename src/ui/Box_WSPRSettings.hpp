@@ -10,6 +10,8 @@
 #include "ui/Ctl_OutputPowerSelect.hpp"
 #include "ui/Ctl_ReportPowerSelect.hpp"
 
+#include <wx/gbsizer.h>
+
 class Box_WSPRSettings : public wxStaticBoxSizer
 {
 protected:
@@ -28,6 +30,12 @@ protected:
 	wxStaticText *ctl_statsMsg;
 	wxBoxSizer *wsprStatsSizer;
 
+	wxGridBagSizer *wsprSizer;
+	wxWindow *formParent;
+
+	void addCtl(wxWindow *window, wxGBPosition pos, wxSizerFlags szFlags);
+	void addFormRow(int row, wxWindow *label, wxWindow *field);
+	void addFormRow(int row, wxString label, wxWindow *field);
 public:
 	Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel_);
 	virtual ~Box_WSPRSettings();
