@@ -142,7 +142,7 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 	cfg.reportedPower_dBm = ctl_reportPowerSelect->getdBm();
 	if (cfg.reportedPower_dBm==-1)
 		cfg.reportedPower_dBm = cfg.outputPower_dBm;
-	cfg.paBias = ctl_outputPowerSelect->getpaBias(cfg.band);
+	cfg.paBias = ctl_outputPowerSelect->getpaBias(ctl_band->getFreq());
 	try
 	{
 		cfg.maxRuntime = StrUtil::stringToDouble(std::string(ctl_maxDuration->GetValue()))*24*3600;
