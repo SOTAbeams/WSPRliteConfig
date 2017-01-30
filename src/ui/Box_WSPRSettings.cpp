@@ -36,7 +36,7 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	int row = 0;
 	txt_callsign = new wxTextCtrl(formParent, wxID_ANY);
 	txt_callsign->Bind(wxEVT_TEXT, &Box_WSPRSettings::OnCallsignChanged, this);
-	addFormRow(row++, _("Callsign:"), txt_callsign);
+	addFormRow(row++, _("WSPR callsign:"), txt_callsign);
 
 	txt_locator = new wxTextCtrl(formParent, wxID_ANY);
 	txt_locator->SetValidator(MaidenheadValidator());
@@ -88,6 +88,10 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	wsprSizer->Add(wsprStatsSizer, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
 	row++;
 
+	ctl_cwId_callsign = new wxTextCtrl(formParent, wxID_ANY);
+	ctl_cwId_callsign->SetMaxLength(15);
+	addFormRow(row++, _("CW ID callsign (only use\n if absolutely necessary):"), ctl_cwId_callsign);
+
 	wsprSizer->AddGrowableCol(1,1);
 
 	updateStatsLink();
@@ -118,6 +122,7 @@ void Box_WSPRSettings::Enable(bool status)
 	ctl_maxDuration->Enable(status);
 	ctl_txRate->Enable(status);
 	msg_freq->Show(status);
+	ctl_cwId_callsign->Enable(status && deviceModel->info.firmwareVersion.supports_cwId());
 }
 
 void Box_WSPRSettings::getFields(DeviceConfig &cfg)
@@ -160,6 +165,12 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 		throw std::invalid_argument("Invalid value for repeat rate");
 	}
 	cfg.transmitFreq = ctl_band->getFreq();
+
+	cfg.cwId_callsign = ctl_cwId_callsign->GetValue();
+	if (cfg.cwId_callsign!="")
+		cfg.cwId_freq = ctl_band->getSelectedBandInfo()->centreFreq - 150;
+	else
+		cfg.cwId_freq = 0;
 }
 
 void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
@@ -174,10 +185,12 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 	ctl_maxDuration->SetValue(StrUtil::doubleToString((double)cfg.maxRuntime/(24*3600)));
 	ctl_txRate->SetValue(std::to_string(cfg.transmitPercent));
 	ctl_band->setFreq(cfg.transmitFreq);
+	ctl_cwId_callsign->SetValue(cfg.cwId_callsign);
 	if (cfg.changeCounter<=1)
 	{
 		ctl_band->genFreq();
 	}
+	ctl_cwId_callsign->Enable(deviceModel->info.firmwareVersion.supports_cwId());
 	updateTxFreqText();
 	updateStatsLink();
 }

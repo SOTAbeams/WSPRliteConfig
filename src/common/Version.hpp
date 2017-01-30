@@ -24,6 +24,7 @@ public:
 	bool isValid() const;
 
 	bool supports_deviceMode() const;
+	bool supports_cwId() const;
 };
 
 bool operator==(const FirmwareVersion &a, const FirmwareVersion &b);

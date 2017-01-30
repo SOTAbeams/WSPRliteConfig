@@ -14,7 +14,8 @@ txt(txt_), centreFreq(centreFreq_), bandId(bandId_)
 
 Ctl_BandSelect::Ctl_BandSelect(wxWindow *parent, wxWindowID id) :
 wxComboBox(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY | wxCB_DROPDOWN),
-rng(std::chrono::high_resolution_clock::now().time_since_epoch().count())
+rng(std::chrono::high_resolution_clock::now().time_since_epoch().count()),
+freq(14097100ULL)
 {
 	bands.push_back(Band(_("20m / 14 MHz"), 14097100ULL, WsprBand::Band_20m));
 	bands.push_back(Band(_("30m / 10 MHz"), 10140200ULL, WsprBand::Band_30m));

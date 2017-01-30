@@ -24,6 +24,7 @@ protected:
 	Ctl_OutputPowerSelect *ctl_outputPowerSelect;
 	Ctl_ReportPowerSelect *ctl_reportPowerSelect;
 	wxStaticText *msg_band, *msg_freq;
+	wxTextCtrl *ctl_cwId_callsign;
 	std::string statsUrl;
 	wxTextCtrl *ctl_statsUrl;
 	wxButton *ctl_statsOpen;

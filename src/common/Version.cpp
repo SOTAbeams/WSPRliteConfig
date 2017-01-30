@@ -40,6 +40,11 @@ bool FirmwareVersion::supports_deviceMode() const
 	return ((*this) >= FirmwareVersion(1,0,4,20170109));
 }
 
+bool FirmwareVersion::supports_cwId() const
+{
+	return ((*this) >= FirmwareVersion(1,0,6,20170130));
+}
+
 void DeviceVersion::loadFromMsgData(DeviceComm::Data &data, size_t i)
 {
 	productId = data.parse_int_le<uint32_t>(i);

@@ -16,6 +16,12 @@ void Task_WSPRSave::task()
 		newCfg.changeCounter = deviceModel->config.changeCounter+1;
 	send(DeviceComm::genMsg_write_int<uint64_t>(DeviceComm::VarId::ChangeCounter, newCfg.changeCounter)).assert_ack();
 
+	if (deviceModel->info.firmwareVersion.supports_cwId())
+	{
+		send(DeviceComm::genMsg_write_int<uint32_t>(DeviceComm::VarId::CwId_Freq, newCfg.cwId_freq)).assert_ack();
+		send(DeviceComm::genMsg_write_str(DeviceComm::VarId::CwId_Callsign, newCfg.cwId_callsign)).assert_ack();
+	}
+
 	deviceModel->config = newCfg;
 }
 

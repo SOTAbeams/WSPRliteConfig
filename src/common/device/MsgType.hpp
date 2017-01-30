@@ -45,6 +45,8 @@ enum class VarId
 	WSPR_reportPower,
 	WSPR_txPct,
 	WSPR_maxTxDuration,
+	CwId_Freq,
+	CwId_Callsign,
 	END,
 };
 

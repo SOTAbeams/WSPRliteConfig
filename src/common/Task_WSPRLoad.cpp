@@ -36,6 +36,19 @@ void Task_WSPRLoad::task()
 	r = send(DeviceComm::genMsg_read(DeviceComm::VarId::WSPR_txFreq)).assert_data();
 	cfg.transmitFreq = r.msg.data.parse_int_le<uint64_t>();
 
+	if (deviceInfo.firmwareVersion.supports_cwId())
+	{
+		r = send(DeviceComm::genMsg_read(DeviceComm::VarId::CwId_Freq)).assert_data();
+		cfg.cwId_freq = r.msg.data.parse_int_le<uint32_t>();
+		r = send(DeviceComm::genMsg_read(DeviceComm::VarId::CwId_Callsign)).assert_data();
+		cfg.cwId_callsign = r.msg.data.parse_string();
+	}
+	else
+	{
+		cfg.cwId_freq = 0;
+		cfg.cwId_callsign = "";
+	}
+
 	deviceModel->config = cfg;
 	deviceModel->info = deviceInfo;
 }

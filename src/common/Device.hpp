@@ -210,6 +210,9 @@ public:
 
 	uint64_t changeCounter;
 
+	uint32_t cwId_freq;
+	std::string cwId_callsign;
+
 	static bool isValidCallsign(std::string x);
 };
 
