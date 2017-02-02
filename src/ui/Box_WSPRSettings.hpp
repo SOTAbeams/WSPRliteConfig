@@ -12,7 +12,7 @@
 
 #include <wx/gbsizer.h>
 
-class Box_WSPRSettings : public wxStaticBoxSizer
+class Box_WSPRSettings : public wxPanel
 {
 protected:
 	std::shared_ptr<DeviceModel> deviceModel;
@@ -46,7 +46,7 @@ public:
 	void OnBandChanged(wxCommandEvent& event);
 	void OnCallsignChanged(wxCommandEvent& event);
 	void OnBtnStats(wxCommandEvent& event);
-	void Enable(bool status);
+	void EnableCtls(bool status);
 
 	void getFields(DeviceConfig &cfg);
 	void setFields(const DeviceConfig &cfg);

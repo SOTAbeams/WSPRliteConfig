@@ -15,9 +15,9 @@ void Box_WSPRSettings::addCtl(wxWindow *window, wxGBPosition pos, wxSizerFlags s
 void Box_WSPRSettings::addFormRow(int row, wxWindow *label, wxWindow *field)
 {
 	if (label)
-		addCtl(label, wxGBPosition(row,0), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT).Border(wxALL, 0).ReserveSpaceEvenIfHidden());
+		addCtl(label, wxGBPosition(row,0), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT).Border(wxALL, 1));
 	if (field)
-		addCtl(field, wxGBPosition(row,1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Expand().Border(wxALL, 0).ReserveSpaceEvenIfHidden());
+		addCtl(field, wxGBPosition(row,1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Expand().Border(wxALL, 1));
 }
 
 void Box_WSPRSettings::addFormRow(int row, wxString label, wxWindow *field)
@@ -26,14 +26,29 @@ void Box_WSPRSettings::addFormRow(int row, wxString label, wxWindow *field)
 }
 
 Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel_) :
-	wxStaticBoxSizer(wxVERTICAL, parent, _("WSPR settings")),
+	wxPanel(parent),
 	deviceModel(deviceModel_)
 {
 	wsprSizer = new wxGridBagSizer();
-	Add(wsprSizer, wxSizerFlags().Expand().Border(wxALL, 10));
-	formParent = parent;
+	//Add(wsprSizer, wxSizerFlags().Expand().Border(wxALL, 10));
+	formParent = this;
 
 	int row = 0;
+
+	{
+		// Title
+		wxSizerFlags szFlags = wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL);
+		wxStaticText *ctl = new wxStaticText(formParent, wxID_ANY, _("WSPR settings"));
+		wxFont font = ctl->GetFont();
+		font.SetWeight(wxFONTWEIGHT_BOLD);
+		ctl->SetFont(font);
+		wsprSizer->Add(ctl, wxGBPosition(row,0), wxGBSpan(1,2), szFlags.GetFlags(), szFlags.GetBorderInPixels());
+	}
+	row++;
+
+	// Spacer below title
+	wsprSizer->Add(1, 10, wxGBPosition(row++,0), wxGBSpan(1,2));
+
 	txt_callsign = new wxTextCtrl(formParent, wxID_ANY);
 	txt_callsign->Bind(wxEVT_TEXT, &Box_WSPRSettings::OnCallsignChanged, this);
 	addFormRow(row++, _("WSPR ident:"), txt_callsign);
@@ -96,6 +111,8 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 
 	updateStatsLink();
 	updateTxFreqText();
+
+	SetSizerAndFit(wsprSizer);
 }
 
 Box_WSPRSettings::~Box_WSPRSettings()
@@ -112,7 +129,7 @@ void Box_WSPRSettings::OnCallsignChanged(wxCommandEvent &event)
 	updateStatsLink();
 }
 
-void Box_WSPRSettings::Enable(bool status)
+void Box_WSPRSettings::EnableCtls(bool status)
 {
 	txt_callsign->Enable(status);
 	txt_locator->Enable(status);

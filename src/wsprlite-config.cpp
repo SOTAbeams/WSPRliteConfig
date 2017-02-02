@@ -9,6 +9,8 @@
 #include "ui/FirmwareUpdate.hpp"
 #include "ui/Box_WSPRSettings.hpp"
 
+#include <wx/statline.h>
+
 #include "common/Device.hpp"
 #include "common/Task_Connect.hpp"
 #include "common/Task_StatusCheck.hpp"
@@ -125,41 +127,41 @@ WSPRConfigFrame::WSPRConfigFrame(const wxString& title, const wxPoint& pos, cons
 
 	panel_config = new wxPanel(mainPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 	wxBoxSizer *configSizer = new wxBoxSizer(wxVERTICAL);
-	mainSizer->Add(panel_config, wxSizerFlags().Expand());
+	mainSizer->Add(panel_config, wxSizerFlags().Expand().Border(wxALL, 6));
 
-	wxStaticBoxSizer* deviceBox = new wxStaticBoxSizer(wxVERTICAL, panel_config, _("Hardware"));
+	wxPanel* deviceBox = new wxPanel(panel_config);
 	configSizer->Add(deviceBox, wxSizerFlags().Expand().Border(wxALL, 6));
+	configSizer->Add(new wxStaticLine(panel_config), wxSizerFlags().Expand().Border(wxALL, 6));
 	wxBoxSizer* deviceSizer = new wxBoxSizer(wxVERTICAL);
-	deviceBox->Add(deviceSizer, wxSizerFlags().Expand().Border(wxALL, 10));
 
-	deviceSizer->Add(new wxStaticText(panel_config, wxID_ANY, _("Select serial port to use:")));
+	deviceSizer->Add(new wxStaticText(deviceBox, wxID_ANY, _("Select serial port to use:")));
 
 	wxBoxSizer* portChooseSizer = new wxBoxSizer(wxHORIZONTAL);
-	portChoose_list = new PortChooseList(panel_config);
+	portChoose_list = new PortChooseList(deviceBox);
 	portChoose_list->SetMinClientSize(wxSize(300,-1));
 	portChooseSizer->Add(portChoose_list, wxSizerFlags().Expand().Proportion(1));
-	btn_connect = new wxButton(panel_config, ID_Btn_Connect, _("Connect"));
+	btn_connect = new wxButton(deviceBox, ID_Btn_Connect, _("Connect"));
 	portChooseSizer->Add(btn_connect, wxSizerFlags().Expand());
 	deviceSizer->Add(portChooseSizer, wxSizerFlags().Expand());
 
 	deviceSizer->AddSpacer(10);
 
-	msg_firmwareVersion = new wxStaticText(panel_config, wxID_ANY, wxEmptyString);
+	msg_firmwareVersion = new wxStaticText(deviceBox, wxID_ANY, wxEmptyString);
 	deviceSizer->Add(msg_firmwareVersion,  wxSizerFlags().Expand().Left());
-	msg_devStatus = new wxStaticText(panel_config, wxID_ANY, wxEmptyString);
+	msg_devStatus = new wxStaticText(deviceBox, wxID_ANY, wxEmptyString);
 	deviceSizer->Add(msg_devStatus, wxSizerFlags().Expand().Left().ReserveSpaceEvenIfHidden());
 
 	wxBoxSizer* deviceBtnsSizer = new wxBoxSizer(wxHORIZONTAL);
 	deviceBtnsSizer->AddStretchSpacer(1);
-	btn_firmwareUpdate = new wxButton(panel_config, ID_Btn_FirmwareUpdate, _("Update firmware"));
+	btn_firmwareUpdate = new wxButton(deviceBox, ID_Btn_FirmwareUpdate, _("Update firmware"));
 	deviceBtnsSizer->Add(btn_firmwareUpdate, wxSizerFlags().Align(wxALIGN_CENTRE_VERTICAL));
 
 	// This is handy for testing frequency accuracy and power output, but will not be useful for most users so is commented out:
-	/*btn_testRF = new wxButton(panel_config, ID_Btn_TestRF, _("RF output test"));
+	/*btn_testRF = new wxButton(deviceBox, ID_Btn_TestRF, _("RF output test"));
 	deviceBtnsSizer->Add(btn_testRF, wxSizerFlags().Border(wxALL, 6).Align(wxALIGN_CENTRE_VERTICAL));*/
 
 	deviceBtnsSizer->AddSpacer(10);
-	btn_save = new wxButton(panel_config, ID_SaveWSPR, _("Save WSPR settings"));
+	btn_save = new wxButton(deviceBox, ID_SaveWSPR, _("Save WSPR settings"));
 	deviceBtnsSizer->Add(btn_save, wxSizerFlags().Border(wxALL, 6).Align(wxALIGN_CENTRE_VERTICAL));
 	deviceSizer->Add(deviceBtnsSizer, wxSizerFlags().Expand().Proportion(1).Border(wxALL, 6));// TODO: proportion?
 
@@ -174,8 +176,8 @@ WSPRConfigFrame::WSPRConfigFrame(const wxString& title, const wxPoint& pos, cons
 	wsprSettingsBox = new Box_WSPRSettings(panel_config, deviceModel);
 	configSizer->Add(wsprSettingsBox, wxSizerFlags().Expand().Border(wxALL, 6));
 
+	deviceBox->SetSizerAndFit(deviceSizer);
 	panel_config->SetSizerAndFit(configSizer);
-
 	mainPanel->SetSizerAndFit(mainSizer);
 
 	WSPRCtlsEnabled(false);
@@ -344,7 +346,7 @@ void WSPRConfigFrame::onDisconnect()
 
 void WSPRConfigFrame::WSPRCtlsEnabled(bool status)
 {
-	wsprSettingsBox->Enable(status);
+	wsprSettingsBox->EnableCtls(status);
 	btn_save->Enable(status);
 	if (btn_testRF)
 		btn_testRF->Enable(status);
