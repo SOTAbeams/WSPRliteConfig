@@ -36,7 +36,7 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	int row = 0;
 	txt_callsign = new wxTextCtrl(formParent, wxID_ANY);
 	txt_callsign->Bind(wxEVT_TEXT, &Box_WSPRSettings::OnCallsignChanged, this);
-	addFormRow(row++, _("WSPR callsign:"), txt_callsign);
+	addFormRow(row++, _("WSPR ident:"), txt_callsign);
 
 	txt_locator = new wxTextCtrl(formParent, wxID_ANY);
 	txt_locator->SetValidator(MaidenheadValidator());
@@ -89,8 +89,8 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	row++;
 
 	ctl_cwId_callsign = new wxTextCtrl(formParent, wxID_ANY);
-	ctl_cwId_callsign->SetMaxLength(15);
-	addFormRow(row++, _("CW ID callsign (only use\n if absolutely necessary):"), ctl_cwId_callsign);
+	ctl_cwId_callsign->SetMaxLength(12);
+	addFormRow(row++, _("CW callsign (only use\n if absolutely necessary):"), ctl_cwId_callsign);
 
 	wsprSizer->AddGrowableCol(1,1);
 
@@ -166,7 +166,7 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 	}
 	cfg.transmitFreq = ctl_band->getFreq();
 
-	cfg.cwId_callsign = ctl_cwId_callsign->GetValue();
+	cfg.cwId_callsign = ctl_cwId_callsign->GetValue().Upper();
 	if (cfg.cwId_callsign!="")
 		cfg.cwId_freq = ctl_band->getSelectedBandInfo()->centreFreq - 150;
 	else
