@@ -5,7 +5,7 @@
 MaidenheadValidator::MaidenheadValidator() :
 wxTextValidator(wxFILTER_INCLUDE_CHAR_LIST)
 {
-	SetCharIncludes("ABCDEFGHIJKLMNOPQR0123456789");//abcdefghijklmnopqrstuvwx
+	SetCharIncludes("ABCDEFGHIJKLMNOPQR0123456789abcdefghijklmnopqr");//stuvwx
 }
 
 MaidenheadValidator::MaidenheadValidator(const MaidenheadValidator &val)

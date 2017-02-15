@@ -187,6 +187,11 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 
 	cfg.callsign = newCallsign;
 	cfg.locator = std::string(txt_locator->GetValue());
+	for (int i=0; i<2 && i<=cfg.locator.length(); i++)
+	{
+		cfg.locator[i] = std::toupper(cfg.locator[i]);
+	}
+
 	cfg.band = ctl_band->getBandId();
 	cfg.outputPower_dBm = ctl_outputPowerSelect->getdBm();
 	cfg.reportedPower_dBm = ctl_reportPowerSelect->getdBm();
