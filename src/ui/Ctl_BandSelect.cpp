@@ -24,6 +24,7 @@ freq(14097100ULL)
 	//bands.push_back(Band(_("60m / 5.3 MHz"), 5288700ULL, WsprBand::Band_60m));
 	bands.push_back(Band(_("80m / 3.6 MHz"), 3594100ULL, WsprBand::Band_80m));
 	bands.push_back(Band(_("160m / 1.8 MHz"), 1838100ULL, WsprBand::Band_160m));
+	bands.push_back(Band(_("630m / 0.47 MHz"), 475700ULL, WsprBand::Band_630m));
 
 	for (Band &b: bands)
 	{

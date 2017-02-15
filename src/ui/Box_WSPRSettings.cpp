@@ -131,6 +131,11 @@ Box_WSPRSettings::~Box_WSPRSettings()
 
 void Box_WSPRSettings::OnBandChanged(wxCommandEvent& event)
 {
+	if (ctl_band->getBandId()==WsprBand::Band_630m && deviceModel && !deviceModel->info.firmwareVersion.supports_630m())
+	{
+		wxMessageBox(_("Please update your WSPRlite firmware to v1.0.6 or later before using the 630m band"), _("CW callsign"), wxOK | wxICON_WARNING);
+		ctl_band->setFreq(deviceModel->config.transmitFreq);
+	}
 	updateTxFreqText();
 }
 

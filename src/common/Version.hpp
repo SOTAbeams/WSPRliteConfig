@@ -25,6 +25,7 @@ public:
 
 	bool supports_deviceMode() const;
 	bool supports_cwId() const;
+	bool supports_630m() const;
 };
 
 bool operator==(const FirmwareVersion &a, const FirmwareVersion &b);

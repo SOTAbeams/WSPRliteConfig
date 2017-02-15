@@ -29,6 +29,7 @@ enum class WsprBand
 	Band_60m=5,
 	Band_80m=3,
 	Band_160m=1,
+	Band_630m=0,
 };
 
 #define Device_xoFreq_fracBits 4
