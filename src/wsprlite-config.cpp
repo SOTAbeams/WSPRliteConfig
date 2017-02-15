@@ -245,7 +245,7 @@ void WSPRConfigFrame::deviceSave()
 
 	if (!DeviceConfig::isValidCallsign(task->newCfg.callsign))
 	{
-		wxMessageBox(_("Callsign is invalid. A callsign must consist of 1 or 2 letters/numbers, then a number, then up to 3 letters."), _("Invalid callsign"), wxOK | wxICON_ERROR );
+		wxMessageBox(_("WSPR ident is invalid. It must consist of 1 or 2 letters/numbers, then a number, then up to 3 letters."), _("Invalid WSPR ident"), wxOK | wxICON_ERROR );
 		return;
 	}
 
