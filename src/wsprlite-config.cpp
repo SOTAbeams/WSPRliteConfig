@@ -89,7 +89,7 @@ wxIMPLEMENT_APP(WSPRConfigApp);
 
 bool WSPRConfigApp::OnInit()
 {
-	WSPRConfigFrame *frame = new WSPRConfigFrame("WSPRlite settings - v1.0.6", wxPoint(50, 50), wxSize(450, 340) );
+	WSPRConfigFrame *frame = new WSPRConfigFrame("WSPRlite settings - v1.0.7", wxPoint(50, 50), wxSize(450, 340) );
 	frame->Show( true );
 	return true;
 }
