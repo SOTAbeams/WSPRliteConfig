@@ -24,6 +24,7 @@ protected:
 	Ctl_OutputPowerSelect *ctl_outputPowerSelect;
 	Ctl_ReportPowerSelect *ctl_reportPowerSelect;
 	wxStaticText *msg_band, *msg_freq;
+	wxCheckBox *ctl_cwId_enable;
 	wxTextCtrl *ctl_cwId_callsign;
 	std::string statsUrl;
 	wxTextCtrl *ctl_statsUrl;
@@ -43,10 +44,13 @@ public:
 
 	void updateStatsLink();
 	void updateTxFreqText();
+	void cwIdCtls_updateStatus();
 	void OnBandChanged(wxCommandEvent& event);
 	void OnCallsignChanged(wxCommandEvent& event);
 	void OnBtnStats(wxCommandEvent& event);
+	void OnCWIDEnableChange(wxCommandEvent& event);
 	void EnableCtls(bool status);
+	void onCtlsChanged();
 
 	void getFields(DeviceConfig &cfg);
 	void setFields(const DeviceConfig &cfg);
