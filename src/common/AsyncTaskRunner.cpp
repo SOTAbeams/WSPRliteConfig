@@ -1,21 +1,5 @@
 #include "AsyncTaskRunner.hpp"
 
-void AsyncTask::runSync()
-{
-	try
-	{
-		task();
-	}
-	catch (const std::exception& e)
-	{
-		onError(e.what());
-		return;
-	}
-	onSuccess();
-}
-
-AsyncTask::~AsyncTask() {}
-
 void AsyncTaskRunner::threadStart()
 {
 	threadStop();
