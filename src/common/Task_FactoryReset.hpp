@@ -9,6 +9,9 @@ public:
 	using DeviceCommTask::DeviceCommTask;
 	void task() override;
 	virtual ~Task_FactoryReset();
+
+	void reset_WSPR();
+	void reset_xoFreq();
 };
 
 #endif
