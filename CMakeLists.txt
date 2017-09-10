@@ -42,7 +42,12 @@ endif()
 find_package(wxWidgets COMPONENTS core adv base REQUIRED)
 include(${wxWidgets_USE_FILE})
 target_link_libraries(dxplorer_ui ${wxWidgets_LIBRARIES})
- 
+
+if((${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
+    string(REPLACE ";" " -I " wxWidgets_RC_INC "${wxWidgets_INCLUDE_DIRS}")
+    set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -I ${wxWidgets_RC_INC}")
+endif()
+
 find_package(libserialport REQUIRED)
 target_link_libraries(dxplorer_common ${libserialport_LIBRARY})
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
