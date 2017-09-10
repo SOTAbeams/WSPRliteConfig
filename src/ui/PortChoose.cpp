@@ -43,8 +43,13 @@ std::vector<wxString> PortChooseList::getNewPortsText()
 	for (SerialPort const &p: portsList.ports)
 	{
 		std::stringstream ss;
-		ss << p.GetName() << " (" << p.GetDesc() << ")";
-		items.push_back(ss.str());
+		try {
+			ss << p.GetName() << " (" << p.GetDesc() << ")";
+			items.push_back(ss.str());
+		} catch (...) {
+			items.push_back("Unknown");
+		}
+
 	}
 	return items;
 }
@@ -94,14 +99,17 @@ void PortChooseList::UpdatePorts()
 		SetSelection(wxNOT_FOUND);
 	}
 
-	if (GetSelection()==wxNOT_FOUND && preferredDesc!="")
-	{
-		for (size_t i=0; i<newPortsText.size(); i++)
+	for (std::string desc : preferredDesc) {
+		wxString udesc = wxString(desc).Lower();
+		if (GetSelection()==wxNOT_FOUND && desc!="")
 		{
-			if (newPortsText[i].find(preferredDesc)!=std::string::npos)
+			for (size_t i=0; i<newPortsText.size(); i++)
 			{
-				SetSelection(i);
-				break;
+				if (portsText[i].Lower().find(udesc)!=std::string::npos)
+				{
+					SetSelection(i);
+					break;
+				}
 			}
 		}
 	}

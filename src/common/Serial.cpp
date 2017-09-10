@@ -27,12 +27,15 @@ void SerialPortsList::Update()
 	{
 		for (sp_port **p=portsPtr; *p!=nullptr; p++)
 		{
-			newPorts.push_back(SerialPort(*p));
+			try {
+				newPorts.push_back(SerialPort(*p));
+			} catch (...) {
+				// May occur if a port disappears between sp_list_ports and sp_copy_port in SerialPort constructor, so just ignore.
+			}
 		}
+		sp_free_port_list(portsPtr);
 	}
 	ports = std::move(newPorts);
-
-	sp_free_port_list(portsPtr);
 }
 
 

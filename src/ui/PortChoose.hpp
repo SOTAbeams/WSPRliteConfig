@@ -16,7 +16,7 @@ protected:
 	std::vector<wxString> getNewPortsText();
 public:
 	std::vector<wxString> portsText;
-	std::string preferredDesc;
+	std::vector<std::string> preferredDesc;
 	PortChooseList(wxWindow *parent);
 	void UpdatePorts();
 	virtual ~PortChooseList();

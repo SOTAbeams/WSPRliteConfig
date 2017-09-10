@@ -165,7 +165,7 @@ WSPRConfigFrame::WSPRConfigFrame(const wxString& title, const wxPoint& pos, cons
 	deviceBtnsSizer->Add(btn_save, wxSizerFlags().Border(wxALL, 6).Align(wxALIGN_CENTRE_VERTICAL));
 	deviceSizer->Add(deviceBtnsSizer, wxSizerFlags().Expand().Proportion(1).Border(wxALL, 6));// TODO: proportion?
 
-	portChoose_list->preferredDesc = "WSPRlite";
+	portChoose_list->preferredDesc.push_back("WSPRlite");
 	portChoose_list->UpdatePorts();
 	portChoose_list->SetFocus();
 
