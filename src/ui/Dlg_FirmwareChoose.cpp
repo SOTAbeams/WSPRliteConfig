@@ -19,9 +19,18 @@ void Dlg_FirmwareChoose::fw_load(std::string fwPath)
 	hexFile.load(fwPath);
 	if (hexFile.getVersion().isValid())
 	{
-		newFirmware = hexFile;
-		newFirmwareValid = true;
-		fw_updateText();
+		if (hexFile.getVersion().supports_device(deviceModel->info.deviceVersion))
+		{
+			newFirmware = hexFile;
+			newFirmwareValid = true;
+			fw_updateText();
+		}
+		else
+		{
+			newFirmwareValid = false;
+			fw_updateText();
+			wxMessageBox(_("That firmware does not support the currently connected device."), _("Error"), wxOK | wxICON_ERROR );
+		}
 	}
 	else
 	{
@@ -37,7 +46,7 @@ void Dlg_FirmwareChoose::fw_updateText()
 	{
 		std::string txt = newFirmware.getVersion().toString();
 		if (newFirmware.getVersion() < deviceModel->info.firmwareVersion)
-			txt += " (older)";
+			txt += " (" + _("older") + ")";
 		msg_newFirmwareVersion->SetLabelText(txt);
 		ctl_newFirmwarePath->SetValue(newFirmware.hexFilename);
 	}
@@ -50,7 +59,7 @@ void Dlg_FirmwareChoose::fw_updateText()
 }
 
 Dlg_FirmwareChoose::Dlg_FirmwareChoose(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel_)
-	: wxDialog(parent, wxID_ANY, "Select new firmware"),
+	: wxDialog(parent, wxID_ANY, _("Select new firmware")),
 	  deviceModel(deviceModel_),
 	  newFirmwareValid(false)
 {
@@ -102,7 +111,7 @@ Dlg_FirmwareChoose::Dlg_FirmwareChoose(wxWindow *parent, std::shared_ptr<DeviceM
 	{
 		HexFile hexFile;
 		hexFile.load(lastPath);
-		if (hexFile.getVersion().isValid())
+		if (hexFile.getVersion().isValid() && hexFile.getVersion().supports_device(deviceModel->info.deviceVersion))
 		{
 			newFirmware = hexFile;
 			newFirmwareValid = true;

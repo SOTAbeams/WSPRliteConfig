@@ -222,7 +222,7 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 	cfg.transmitFreq = ctl_band->getFreq();
 
 	cfg.cwId_callsign = ctl_cwId_callsign->GetValue().Upper();
-	if (cfg.cwId_callsign!="" && ctl_cwId_enable->GetValue())
+	if (cfg.cwId_callsign!="" && ctl_cwId_enable->GetValue() && ctl_band->getSelectedBandInfo()!=nullptr)
 		cfg.cwId_freq = ctl_band->getSelectedBandInfo()->centreFreq - 150;
 	else
 		cfg.cwId_freq = 0;
@@ -239,6 +239,7 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 		ctl_reportPowerSelect->setdBm(cfg.reportedPower_dBm);
 	ctl_maxDuration->SetValue(StrUtil::doubleToString((double)cfg.maxRuntime/(24*3600)));
 	ctl_txRate->SetValue(std::to_string(cfg.transmitPercent));
+	ctl_band->setDeviceVersion(deviceModel->info.deviceVersion);
 	ctl_band->setFreq(cfg.transmitFreq);
 	ctl_cwId_callsign->SetValue(cfg.cwId_callsign);
 	ctl_cwId_enable->SetValue(deviceModel->info.firmwareVersion.supports_cwId() && cfg.cwId_freq && cfg.cwId_callsign!="");
@@ -303,7 +304,7 @@ void Box_WSPRSettings::updateStatsLink()
 void Box_WSPRSettings::updateTxFreqText()
 {
 	WsprBand bandId = ctl_band->getBandId();
-	if (bandId==WsprBand::Band_20m || bandId==WsprBand::Band_30m)
+	if (deviceModel->info.deviceVersion.has_20mFilter() && (bandId==WsprBand::Band_20m || bandId==WsprBand::Band_30m))
 		msg_band->Hide();
 	else
 		msg_band->Show();

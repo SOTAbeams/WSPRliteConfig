@@ -29,6 +29,9 @@ public:
 	std::vector<Band> bands;
 	Ctl_BandSelect(wxWindow *parent, wxWindowID id);
 
+	// Set the device version (determines which bands are supported by the hardware)
+	void setDeviceVersion(DeviceVersion deviceVersion);
+
 	// Selects the band to which the given frequency belongs
 	void setFreq(uint64_t f);
 

@@ -23,6 +23,11 @@
 
 enum class WsprBand
 {
+	Band_6m=50,
+	Band_10m=28,
+	Band_12m=24,
+	Band_15m=21,
+	Band_17m=18,
 	Band_20m=14,
 	Band_30m=10,
 	Band_40m=7,

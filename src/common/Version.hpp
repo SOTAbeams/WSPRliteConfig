@@ -11,6 +11,20 @@ namespace DeviceComm
 class Data;
 }
 
+
+class DeviceVersion
+{
+public:
+	uint32_t productId;
+	uint32_t productRevision;
+	uint32_t bootloaderVersion;
+
+	void loadFromMsgData(DeviceComm::Data& data, size_t i=0);
+
+	bool has_20mFilter() const;
+};
+
+
 class FirmwareVersion : public RelOps<FirmwareVersion>
 {
 public:
@@ -26,20 +40,11 @@ public:
 	bool supports_deviceMode() const;
 	bool supports_cwId() const;
 	bool supports_630m() const;
+	bool supports_device(DeviceVersion deviceVersion) const;
 };
 
 bool operator==(const FirmwareVersion &a, const FirmwareVersion &b);
 bool operator<(const FirmwareVersion &a, const FirmwareVersion &b);
-
-class DeviceVersion
-{
-public:
-	uint32_t productId;
-	uint32_t productRevision;
-	uint32_t bootloaderVersion;
-
-	void loadFromMsgData(DeviceComm::Data& data, size_t i=0);
-};
 
 
 #endif

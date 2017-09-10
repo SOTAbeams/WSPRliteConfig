@@ -2,9 +2,6 @@
 #include "Device.hpp"
 #include "StrUtil.hpp"
 
-#include <utility>
-using namespace std::rel_ops;
-
 FirmwareVersion::FirmwareVersion() :
 	majorVersion(0), minorVersion(0), patchVersion(0), releaseDate(0)
 {}
@@ -50,6 +47,22 @@ bool FirmwareVersion::supports_630m() const
 	return ((*this) >= FirmwareVersion(1,0,6,20170130));
 }
 
+bool FirmwareVersion::supports_device(DeviceVersion deviceVersion) const
+{
+	if (deviceVersion.productId==1 && deviceVersion.productRevision==1)
+	{
+		// Supported by all released firmware
+		return true;
+	}
+	if ((deviceVersion.productId==1 && deviceVersion.productRevision==2) ||
+		(deviceVersion.productId==2 && deviceVersion.productRevision==1))
+	{
+		// Uses a different EEPROM which is not supported by older firmware
+		return ((*this) >= FirmwareVersion(1,1,0,20170605));
+	}
+	return false;
+}
+
 void DeviceVersion::loadFromMsgData(DeviceComm::Data &data, size_t i)
 {
 	productId = data.parse_int_le<uint32_t>(i);
@@ -58,6 +71,11 @@ void DeviceVersion::loadFromMsgData(DeviceComm::Data &data, size_t i)
 	i += sizeof(uint32_t);
 	bootloaderVersion = data.parse_int_le<uint32_t>(i);
 	i += sizeof(uint32_t);
+}
+
+bool DeviceVersion::has_20mFilter() const
+{
+	return (productId == 1);
 }
 
 
