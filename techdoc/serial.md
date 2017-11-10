@@ -180,6 +180,21 @@ Reply: ResponseData.
 Currently undocumented since they are likely of limited interest. Note that you might break your WSPRlite if you use these incorrectly, to the extent of needing to use a PICkit or similar to fix it.
 
 ### DumpEEPROM
+
+Currently undocumented since it has not been properly tested yet, and might or might not remain in the firmware.
+
 ### WSPR_GetTime
 
-Currently undocumented since they have not been properly tested yet, and might or might not remain in the firmware.
+Gets the total time since WSPR transmission was started (either by pressing the button or by sending a DeviceMode_Set message). Supported by firmware v1.1.1 and later.
+
+Reply: ResponseData.
+
+    msgData ::= milliseconds seconds minutes hours
+    milliseconds ::= uint16
+    seconds ::= uint8
+    minutes ::= uint8
+    hours ::= uint32
+
+### TestCmd
+
+An undocumented command which allows some fine grained direct control of the hardware (e.g. set LED flash sequence, set RF output, get button status), used in factory testing.

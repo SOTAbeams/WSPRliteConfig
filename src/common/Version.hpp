@@ -2,6 +2,8 @@
 #define common_DeviceVersion_h
 
 #include "RelOps.hpp"
+#include "common/WsprBand.hpp"
+#include "common/device/MsgType.hpp"
 
 #include <cstdint>
 #include <string>
@@ -37,9 +39,11 @@ public:
 	void loadFromMsgData(DeviceComm::Data& data, size_t i=0);
 	bool isValid() const;
 
-	bool supports_deviceMode() const;
+	bool supports_band(WsprBand b) const;
+	bool supports_msg(DeviceComm::MsgType t) const;
 	bool supports_cwId() const;
-	bool supports_630m() const;
+	bool supports_driveStrength() const;
+	bool supports_varId(DeviceComm::VarId v) const;
 	bool supports_device(DeviceVersion deviceVersion) const;
 };
 

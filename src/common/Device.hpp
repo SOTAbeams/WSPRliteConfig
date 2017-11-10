@@ -16,30 +16,21 @@
 #include "Serial.hpp"
 #include "Version.hpp"
 #include "AsyncTaskRunner.hpp"
-
+#include "common/WsprBand.hpp"
 #include "device/DeviceMode.hpp"
 #include "device/MsgType.hpp"
 
 
-enum class WsprBand
-{
-	Band_6m=50,
-	Band_10m=28,
-	Band_12m=24,
-	Band_15m=21,
-	Band_17m=18,
-	Band_20m=14,
-	Band_30m=10,
-	Band_40m=7,
-	Band_60m=5,
-	Band_80m=3,
-	Band_160m=1,
-	Band_630m=0,
-};
-
 #define Device_xoFreq_fracBits 4
 #define Device_xoFreq_default ((26999985ULL << Device_xoFreq_fracBits) + 3)
 
+
+enum class PaBiasSource
+{
+	Default=0,
+	Direct,
+	SbLpfKit,
+};
 
 
 namespace DeviceComm
@@ -172,6 +163,8 @@ protected:
 	void commLoop();
 
 public:
+	std::string portName;
+
 	bool isValid() const;
 	void connect(SerialPort const &port);
 	void disconnect();
@@ -213,6 +206,7 @@ public:
 	uint8_t transmitPercent;
 	int maxRuntime;
 	uint64_t xoFreq;
+	PaBiasSource biasSource;
 
 	uint64_t changeCounter;
 
@@ -250,6 +244,9 @@ public:
 	DeviceModeSub submode;
 
 	AsyncTaskRunner taskRunner;
+
+	bool hasCalibratedOscillator() const;
+	uint32_t getMaxRuntimeLimit_days() const;
 };
 
 #endif

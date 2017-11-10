@@ -10,6 +10,9 @@ enum class DeviceMode
 	Test_ConstantTx,
 	FactoryInvalid,
 	HardwareFail,
+	FirmwareError,
+	WSPR_MorseIdent,
+	Test,
 };
 
 

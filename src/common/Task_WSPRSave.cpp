@@ -21,6 +21,10 @@ void Task_WSPRSave::task()
 		send(DeviceComm::genMsg_write_int<uint32_t>(DeviceComm::VarId::CwId_Freq, newCfg.cwId_freq)).assert_ack();
 		send(DeviceComm::genMsg_write_str(DeviceComm::VarId::CwId_Callsign, newCfg.cwId_callsign)).assert_ack();
 	}
+	if (deviceModel->info.firmwareVersion.supports_varId(DeviceComm::VarId::PaBiasSource))
+	{
+		send(DeviceComm::genMsg_write_int<uint8_t>(DeviceComm::VarId::PaBiasSource, (int)newCfg.biasSource)).assert_ack();
+	}
 
 	deviceModel->config = newCfg;
 }

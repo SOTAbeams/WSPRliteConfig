@@ -1,34 +1,40 @@
 #ifndef common_PaBias_h
 #define common_PaBias_h
 
-#include <set>
-#include <vector>
+#include "common/Version.hpp"
+#include "common/Device.hpp"
+
+#include <map>
 #include <cstdint>
+#include <utility>
+#include <memory>
 
 namespace PaBias
 {
 
-class DataPoint
+enum class QueryType
 {
-public:
-	uint64_t freq;
-	int8_t power_dBm;
-	uint16_t paBias;
-	DataPoint();
-	DataPoint(uint64_t freq_, int8_t power_dBm_, uint16_t paBias_);
+	PaBias,
+	MinPower_dBm,
+	MaxPower_dBm,
 };
 
-class Data
+class Query
 {
 public:
-	std::vector<DataPoint> points;
-	std::set<int8_t> powerVals;
-	Data();
+	QueryType type;
+	PaBiasSource biasSource;
+	DeviceVersion deviceVersion;
+	FirmwareVersion firmwareVersion;
+	double freq;
+	double power_dBm;
 };
 
-extern Data data;
+uint16_t get(DeviceInfo &deviceInfo, PaBiasSource biasSource, uint64_t freq, double power_dBm);
+double getMinPower_dBm(DeviceInfo &deviceInfo, PaBiasSource biasSource, uint64_t freq);
+double getMaxPower_dBm(DeviceInfo &deviceInfo, PaBiasSource biasSource, uint64_t freq);
 
-uint16_t get(uint64_t freq, int8_t power_dBm);
+bool hasData(DeviceInfo &deviceInfo, PaBiasSource biasSource, uint64_t freq);
 
 }
 

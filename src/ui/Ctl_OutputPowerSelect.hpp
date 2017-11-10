@@ -14,9 +14,9 @@ public:
 	std::vector<int8_t> powerLevels;
 	Ctl_OutputPowerSelect(wxWindow *parent, wxWindowID id);
 
+	void initChoices(double min_dBm, double max_dBm);
 	void setdBm(int8_t dBm);
 	int8_t getdBm();
-	uint16_t getpaBias(uint64_t freq);
 };
 
 

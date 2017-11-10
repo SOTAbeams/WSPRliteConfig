@@ -32,17 +32,33 @@ bool FirmwareVersion::isValid() const
 	return (majorVersion!=0xFFFFFFFF);
 }
 
-bool FirmwareVersion::supports_deviceMode() const
+bool FirmwareVersion::supports_band(WsprBand b) const
 {
-	return ((*this) >= FirmwareVersion(1,0,4,20170109));
+	if (b == WsprBand::Band_630m) {
+		return ((*this) >= FirmwareVersion(1, 0, 6, 20170130));
+	}
+	// (int)band = floor(centre freq), so 15 and higher is all bands above 14MHz
+	if ((int)b > 15) {
+		return ((*this) >= FirmwareVersion(1, 1, 0, 20170605));
+	}
+	return true;
+}
+
+bool FirmwareVersion::supports_msg(DeviceComm::MsgType t) const
+{
+	using namespace DeviceComm;
+	if (t==MsgType::DeviceMode_Get || t==MsgType::DeviceMode_Set)
+		return ((*this) >= FirmwareVersion(1, 0, 4, 20170109));
+	if (t==MsgType::WSPR_GetTime)
+		return ((*this) >= FirmwareVersion(1, 1, 1,20170803));
+	if (t==MsgType::TestCmd)
+		return ((*this) >= FirmwareVersion(1, 1, 2, 20171009));
+	if ((int)t <= (int)MsgType::DeviceMode_Set)
+		return true;
+	return false;
 }
 
 bool FirmwareVersion::supports_cwId() const
-{
-	return ((*this) >= FirmwareVersion(1,0,6,20170130));
-}
-
-bool FirmwareVersion::supports_630m() const
 {
 	return ((*this) >= FirmwareVersion(1,0,6,20170130));
 }
@@ -107,4 +123,21 @@ bool operator<(const FirmwareVersion &a, const FirmwareVersion &b)
 		return (a.minorVersion < b.minorVersion);
 	}
 	return (a.majorVersion < b.majorVersion);
+}
+
+bool FirmwareVersion::supports_driveStrength() const
+{
+	// PA bias code supports this, but firmware does not yet
+	return false;
+}
+
+bool FirmwareVersion::supports_varId(DeviceComm::VarId v) const
+{
+	if ((int)v <= (int)DeviceComm::VarId::WSPR_maxTxDuration)
+		return true;
+	if (v==DeviceComm::VarId::CwId_Freq || v==DeviceComm::VarId::CwId_Callsign)
+		return ((*this) >= FirmwareVersion(1,0,6,20170130));
+	if (v==DeviceComm::VarId::PaBiasSource)
+		return ((*this) >= FirmwareVersion(1,1,3,20171012));
+	return false;
 }

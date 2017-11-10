@@ -16,7 +16,7 @@ void Task_StatusCheck::task()
 		return;
 	}
 
-	if (deviceModel->info.firmwareVersion.supports_deviceMode())
+	if (deviceModel->info.firmwareVersion.supports_msg(DeviceComm::MsgType::DeviceMode_Get))
 	{
 		DeviceComm::MsgResponse r = send(DeviceComm::MsgType::DeviceMode_Get).assert_data();
 		deviceModel->mode = (DeviceMode)r.msg.data.parse_int_le<uint16_t>(0);

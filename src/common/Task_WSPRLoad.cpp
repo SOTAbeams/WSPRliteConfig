@@ -49,6 +49,16 @@ void Task_WSPRLoad::task()
 		cfg.cwId_callsign = "";
 	}
 
+	if (deviceInfo.firmwareVersion.supports_varId(DeviceComm::VarId::PaBiasSource))
+	{
+		r = send(DeviceComm::genMsg_read(DeviceComm::VarId::PaBiasSource)).assert_data();
+		cfg.biasSource = (PaBiasSource)r.msg.data.parse_int_le<uint8_t>();
+	}
+	else
+	{
+		cfg.biasSource = PaBiasSource::Default;
+	}
+
 	deviceModel->config = cfg;
 	deviceModel->info = deviceInfo;
 }

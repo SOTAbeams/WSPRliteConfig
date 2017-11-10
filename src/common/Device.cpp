@@ -25,7 +25,7 @@ void Connection::handleQEntry(std::shared_ptr<QueueEntry> qe)
 	{
 		if (!attemptTx(qe->msg))
 		{
-			std::cerr << "Communication failed: tx" << std::endl;
+			std::cerr << portName << " Communication failed: tx" << std::endl;
 			std::this_thread::sleep_for(std::chrono::milliseconds(defaultTimeoutTx_ms));
 			continue;
 		}
@@ -36,7 +36,7 @@ void Connection::handleQEntry(std::shared_ptr<QueueEntry> qe)
 		}
 		else
 		{
-			std::cerr << "Communication failed: rx" << std::endl;
+			std::cerr << portName << " Communication failed: rx" << std::endl;
 		}
 	}
 	qe->handleResponse(response);
@@ -279,6 +279,8 @@ void Connection::connect(const SerialPort &port)
 	std::lock_guard<std::recursive_mutex> lksp(spMutex);
 	if (connValid)
 		disconnect();
+
+	portName = port.GetName();
 
 	sp_return ret;
 	ret = sp_copy_port(port.GetSpPort(), &spPort);
@@ -545,4 +547,20 @@ void DeviceInfo::loadVersionsFromMsg(DeviceComm::Data &data)
 {
 	deviceVersion.loadFromMsgData(data, 0);
 	firmwareVersion.loadFromMsgData(data, sizeof(uint32_t)*3);
+}
+
+bool DeviceModel::hasCalibratedOscillator() const
+{
+	// All Flexis are calibrated against a rubidium frequency standard before shipping.
+	// Most WSPRlite Classics have not been calibrated - they have only been checked to make sure the oscillator is reasonably close to the correct value, not adjusted to compensate for the difference from the nominal frequency.
+	return (info.deviceVersion.productId==2);
+}
+
+uint32_t DeviceModel::getMaxRuntimeLimit_days() const
+{
+	if (hasCalibratedOscillator()) {
+		return 45;
+	} else {
+		return 30;
+	}
 }

@@ -3,9 +3,11 @@
 #include "ui/MaidenheadValidator.hpp"
 #include "common/dxplorer.hpp"
 #include "common/StrUtil.hpp"
+#include "common/PaBias.hpp"
 
 #include <wx/hyperlink.h>
 #include <wx/valnum.h>
+#include <cstdio>
 
 void Box_WSPRSettings::addCtl(wxWindow *window, wxGBPosition pos, wxSizerFlags szFlags)
 {
@@ -70,12 +72,24 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	addFormRow(row++, nullptr, new wxStaticText(formParent, wxID_ANY, _("Note: the WSPR protocol limits the locator\nto 4 characters (e.g. JN29)")));
 	addCtl(new wxHyperlinkCtrl(formParent, wxID_ANY, _("Find my locator"), "http://qthlocator.free.fr/"), wxGBPosition(row++, 1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Border(wxALL, 0));
 
-	ctl_band = new Ctl_BandSelect(formParent, wxID_ANY);
+	ctl_band = new Ctl_BandSelect(formParent, wxID_ANY, deviceModel);
 	ctl_band->Bind(wxEVT_COMBOBOX, &Box_WSPRSettings::OnBandChanged, this);
 	addFormRow(row++, _("Band:"), ctl_band);
 
 	msg_freq = new wxStaticText(formParent, wxID_ANY, wxEmptyString);
-	addFormRow(row++, _("Transmit frequency:"), msg_freq);
+	ctl_freq = new wxTextCtrl(formParent, wxID_ANY);
+	ctl_freq->Bind(wxEVT_KILL_FOCUS, &Box_WSPRSettings::OnFreqUnfocus, this);
+	wxIntegerValidator<int> validator_freq(&value_freq, wxNUM_VAL_DEFAULT);
+	validator_freq.SetRange(0,52000000);
+	ctl_freq->SetValidator(validator_freq);
+
+	wxSizer *freqCtlsSizer = new wxBoxSizer(wxVERTICAL);
+	freqCtlsSizer->Add(msg_freq, wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Border(wxALL, 1));
+	freqCtlsSizer->Add(ctl_freq, wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Expand().Border(wxALL, 1));
+	addFormRow(row, _("Transmit frequency / Hz:"), nullptr);
+	wsprSizer->Add(freqCtlsSizer, wxGBPosition(row,1), wxDefaultSpan, wxALL | wxEXPAND, 1);
+	ctl_freq->Hide();
+	row++;
 
 	msg_band = new wxStaticText(formParent, wxID_ANY, _("External lowpass filter required"));
 	addFormRow(row++, nullptr, msg_band);
@@ -86,6 +100,14 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	ctl_reportPowerSelect = new Ctl_ReportPowerSelect(formParent, wxID_ANY);
 	addFormRow(row++, _("Reported transmit power:"), ctl_reportPowerSelect);
 
+	ctl_biasSelect = new Ctl_BiasSelect(formParent, wxID_ANY, deviceModel);
+	ctl_biasSelect->Bind(wxEVT_COMBOBOX, &Box_WSPRSettings::OnBiasSelectChanged, this);
+	addFormRow(row++, _("Filter loss compensation:"), ctl_biasSelect);
+
+	msg_biasSelect = new wxStaticText(formParent, wxID_ANY, wxEmptyString);
+	addFormRow(row++, nullptr, msg_biasSelect);
+
+
 	ctl_txRate = new wxTextCtrl(formParent, wxID_ANY);
 	wxIntegerValidator<int> validator_txRate(&value_txRate, wxNUM_VAL_DEFAULT);
 	validator_txRate.SetRange(1,50);
@@ -93,9 +115,7 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	addFormRow(row++, _("Repeat rate (%):"), ctl_txRate);
 
 	ctl_maxDuration = new wxTextCtrl(formParent, wxID_ANY);
-	wxFloatingPointValidator<float> validator_maxDuration(3, &value_maxDuration, wxNUM_VAL_NO_TRAILING_ZEROES);
-	validator_maxDuration.SetRange(0,30);
-	ctl_maxDuration->SetValidator(validator_maxDuration);
+	updateMaxDurationValidator();
 	addFormRow(row++, _("Max run time (days):"), ctl_maxDuration);
 
 	wsprSizer->Add(new wxStaticText(formParent, wxID_ANY, _("Statistics:")), wxGBPosition(row,0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL | wxALL | wxALIGN_RIGHT, 1);
@@ -131,12 +151,20 @@ Box_WSPRSettings::~Box_WSPRSettings()
 
 void Box_WSPRSettings::OnBandChanged(wxCommandEvent& event)
 {
-	if (ctl_band->getBandId()==WsprBand::Band_630m && deviceModel && !deviceModel->info.firmwareVersion.supports_630m())
+	if (ctl_band->getBandId()==WsprBand::Band_630m && deviceModel && !deviceModel->info.firmwareVersion.supports_band(WsprBand::Band_630m))
 	{
 		wxMessageBox(_("Please update your WSPRlite firmware to v1.0.6 or later before using the 630m band"), _("CW callsign"), wxOK | wxICON_WARNING);
 		ctl_band->setFreq(deviceModel->config.transmitFreq);
 	}
 	updateTxFreqText();
+	updateAvailableOutputPowers();
+	updateBiasSelectText();
+}
+
+void Box_WSPRSettings::OnBiasSelectChanged(wxCommandEvent &event)
+{
+	updateAvailableOutputPowers();
+	updateBiasSelectText();
 }
 
 void Box_WSPRSettings::OnCallsignChanged(wxCommandEvent &event)
@@ -149,11 +177,23 @@ void Box_WSPRSettings::EnableCtls(bool status)
 	txt_callsign->Enable(status);
 	txt_locator->Enable(status);
 	ctl_band->Enable(status);
+	ctl_biasSelect->Enable(status);
 	ctl_outputPowerSelect->Enable(status);
 	ctl_reportPowerSelect->Enable(status);
 	ctl_maxDuration->Enable(status);
 	ctl_txRate->Enable(status);
-	msg_freq->Show(status);
+
+	if (status && deviceModel->hasCalibratedOscillator()) {
+		// Frequency override is only supported on devices where the oscillator has been calibrated, since on uncalibrated devices the frequency may be significantly different from the set value (may be up to a few tens of Hz, though the typical error is smaller)
+		// No point in allowing an override if the WSPRlite cannot guarantee that it will produce the user-supplied value with reasonable accuracy
+		ctl_freq->Show(true);
+		msg_freq->Show(false);
+	} else {
+		ctl_freq->Show(false);
+		msg_freq->Show(status);
+	}
+	ctl_freq->Enable(status);
+
 	if (!status)
 	{
 		ctl_cwId_enable->Enable(status);
@@ -177,6 +217,7 @@ void Box_WSPRSettings::onCtlsChanged()
 
 void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 {
+	checkFreqOverride();
 
 	std::string newCallsign = std::string(txt_callsign->GetValue().Upper());
 	if (cfg.callsign!=newCallsign)
@@ -198,11 +239,14 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 	}
 
 	cfg.band = ctl_band->getBandId();
+
+	cfg.biasSource = ctl_biasSelect->get();
+
 	cfg.outputPower_dBm = ctl_outputPowerSelect->getdBm();
 	cfg.reportedPower_dBm = ctl_reportPowerSelect->getdBm();
 	if (cfg.reportedPower_dBm==-1)
 		cfg.reportedPower_dBm = cfg.outputPower_dBm;
-	cfg.paBias = ctl_outputPowerSelect->getpaBias(ctl_band->getFreq());
+	cfg.paBias = PaBias::get(deviceModel->info, cfg.biasSource, ctl_band->getFreq(), ctl_outputPowerSelect->getdBm());
 	try
 	{
 		cfg.maxRuntime = StrUtil::stringToDouble(std::string(ctl_maxDuration->GetValue()))*24*3600;
@@ -232,6 +276,8 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 {
 	txt_callsign->SetValue(cfg.callsign);
 	txt_locator->SetValue(cfg.locator);
+	ctl_biasSelect->initChoices();
+	ctl_biasSelect->set(cfg.biasSource);
 	ctl_outputPowerSelect->setdBm(cfg.outputPower_dBm);
 	if (cfg.outputPower_dBm==cfg.reportedPower_dBm)
 		ctl_reportPowerSelect->setdBm(-1);
@@ -239,7 +285,7 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 		ctl_reportPowerSelect->setdBm(cfg.reportedPower_dBm);
 	ctl_maxDuration->SetValue(StrUtil::doubleToString((double)cfg.maxRuntime/(24*3600)));
 	ctl_txRate->SetValue(std::to_string(cfg.transmitPercent));
-	ctl_band->setDeviceVersion(deviceModel->info.deviceVersion);
+	ctl_band->initChoices();
 	ctl_band->setFreq(cfg.transmitFreq);
 	ctl_cwId_callsign->SetValue(cfg.cwId_callsign);
 	ctl_cwId_enable->SetValue(deviceModel->info.firmwareVersion.supports_cwId() && cfg.cwId_freq && cfg.cwId_callsign!="");
@@ -250,6 +296,9 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 	cwIdCtls_updateStatus();
 	updateTxFreqText();
 	updateStatsLink();
+	updateAvailableOutputPowers();
+	updateMaxDurationValidator();
+	updateBiasSelectText();
 	onCtlsChanged();
 }
 
@@ -308,8 +357,29 @@ void Box_WSPRSettings::updateTxFreqText()
 		msg_band->Hide();
 	else
 		msg_band->Show();
-	msg_freq->SetLabelText(std::to_string(ctl_band->getFreq()) + "Hz  " + _("(picked randomly within band)"));
+
+	std::string txFreqString = std::to_string(ctl_band->getFreq());
+	msg_freq->SetLabelText(txFreqString + "Hz  " + _("(picked randomly within band)"));
+	if (txFreqString != ctl_freq->GetValue()) {
+		ctl_freq->ChangeValue(txFreqString);
+	}
 	onCtlsChanged();
+}
+
+void Box_WSPRSettings::updateAvailableOutputPowers()
+{
+	uint64_t freq = ctl_band->getFreq();
+	PaBiasSource biasSource = ctl_biasSelect->get();
+	double minPower = PaBias::getMinPower_dBm(deviceModel->info, biasSource, freq);
+	double maxPower = PaBias::getMaxPower_dBm(deviceModel->info, biasSource, freq);
+	ctl_outputPowerSelect->initChoices(minPower, maxPower);
+}
+
+void Box_WSPRSettings::updateMaxDurationValidator()
+{
+	wxFloatingPointValidator<float> validator_maxDuration(3, &value_maxDuration, wxNUM_VAL_NO_TRAILING_ZEROES);
+	validator_maxDuration.SetRange(0, deviceModel->getMaxRuntimeLimit_days());
+	ctl_maxDuration->SetValidator(validator_maxDuration);
 }
 
 void Box_WSPRSettings::cwIdCtls_updateStatus()
@@ -338,6 +408,38 @@ void Box_WSPRSettings::cwIdCtls_updateStatus()
 	onCtlsChanged();
 }
 
+void Box_WSPRSettings::checkFreqOverride()
+{
+	uint64_t newFreq = StrUtil::stringToUint(ctl_freq->GetValue().ToStdString());
+	if (newFreq!=ctl_band->getFreq()) {
+		if (ctl_band->isValidFreq(newFreq)) {
+			ctl_band->setFreq(newFreq);
+			updateTxFreqText();
+		} else {
+			WsprBandInfo *band = ctl_band->getSelectedBandInfo();
+			const char *msg = _("Not a valid WSPR frequency. Valid frequencies for this band are between %llu and %llu Hz.");
+			char msgf[sizeof(msg)+100];
+			std::sprintf(msgf, msg, (unsigned long long)band->getMinFreq(), (unsigned long long)band->getMaxFreq());
+			wxMessageBox(msgf, _("Invalid frequency"), wxOK | wxICON_ERROR);
+
+			// Reset to old frequency stored in band control
+			updateTxFreqText();
+		}
+	}
+}
+
+void Box_WSPRSettings::updateBiasSelectText()
+{
+	bool hasData = PaBias::hasData(deviceModel->info, ctl_biasSelect->get(), ctl_band->getFreq());
+	if (hasData) {
+		msg_biasSelect->Hide();
+	} else {
+		msg_biasSelect->SetLabelText(_("No data available for this band and filter type.\nDefaulting to no filter compensation."));
+		msg_biasSelect->Show();
+	}
+	onCtlsChanged();
+}
+
 void Box_WSPRSettings::OnBtnStats(wxCommandEvent &event)
 {
 	wxLaunchDefaultBrowser(statsUrl);
@@ -357,4 +459,9 @@ void Box_WSPRSettings::OnCWIDEnableChange(wxCommandEvent &event)
 		wxMessageBox(msg, _("CW callsign"), wxOK | wxICON_INFORMATION );
 	}
 	cwIdCtls_updateStatus();
+}
+
+void Box_WSPRSettings::OnFreqUnfocus(wxFocusEvent &event)
+{
+	checkFreqOverride();
 }

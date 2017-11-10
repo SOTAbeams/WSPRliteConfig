@@ -26,6 +26,7 @@ enum class MsgType
 	DeviceMode_Set,
 	DumpEEPROM,
 	WSPR_GetTime,
+	TestCmd,
 };
 
 // EEPROM variable IDs, for use with MsgType::Read and Write
@@ -47,9 +48,21 @@ enum class VarId
 	WSPR_maxTxDuration,
 	CwId_Freq,
 	CwId_Callsign,
+	PaBiasSource,
 	END,
 };
 
+// Various subcommands used for factory testing.
+enum class TestCmd
+{
+	Led_setState=0,
+	Led_setSeq,
+	Btn_resetCount,
+	Btn_resetCountLastGet,
+	Btn_getState,
+	Si5351_setTx,
+	Si5351_off,
+};
 
 }
 

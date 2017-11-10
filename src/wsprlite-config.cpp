@@ -89,7 +89,7 @@ wxIMPLEMENT_APP(WSPRConfigApp);
 
 bool WSPRConfigApp::OnInit()
 {
-	WSPRConfigFrame *frame = new WSPRConfigFrame("WSPRlite settings - v1.1.0", wxPoint(50, 50), wxSize(450, 340) );
+	WSPRConfigFrame *frame = new WSPRConfigFrame("WSPRlite settings - v1.2.0", wxPoint(50, 50), wxSize(450, 340) );
 	frame->Show( true );
 	return true;
 }
@@ -373,7 +373,7 @@ void WSPRConfigFrame::startStatusUpdate()
 	task->onSuccess.add([this](){
 		GetEventHandler()->CallAfter([this](){
 			failedStatusCheckCount = 0;
-			if (!deviceModel->info.firmwareVersion.supports_deviceMode())
+			if (!deviceModel->info.firmwareVersion.supports_msg(DeviceComm::MsgType::DeviceMode_Get))
 			{
 				msg_devStatus->Hide();
 				return;
@@ -389,6 +389,9 @@ void WSPRConfigFrame::startStatusUpdate()
 				break;
 			case DeviceMode::FactoryInvalid:
 				msg_devStatus->SetLabelText(_("Error: missing factory config, please contact SOTAbeams"));
+				break;
+			case DeviceMode::FirmwareError:
+				msg_devStatus->SetLabelText(_("Error: firmware error, try powering your WSPRlite off and on again. If it keeps happening, please contact SOTAbeams."));
 				break;
 			case DeviceMode::WSPR_Invalid:
 				msg_devStatus->SetLabelText(_("Status: WSPR settings not yet configured"));
@@ -406,6 +409,9 @@ void WSPRConfigFrame::startStatusUpdate()
 				msg_devStatus->SetLabelText(txt);
 				break;
 			}
+			case DeviceMode::WSPR_MorseIdent:
+				msg_devStatus->SetLabelText(_("Status: WSPR mode active, transmitting CW ident"));
+				break;
 			default:
 				msg_devStatus->SetLabelText(_("Unknown status"));
 				break;

@@ -5,40 +5,33 @@
 #ifndef WX_PRECOMP
 	#include <wx/wx.h>
 #endif
-#include <random>
 
 #include "common/Device.hpp"
+#include "common/WsprBand.hpp"
+
+#include <memory>
 
 class Ctl_BandSelect : public wxComboBox
 {
-protected:
-	std::mt19937 rng;
-
 public:
-	class Band
-	{
-	public:
-		wxString txt;
-		uint64_t centreFreq;
-		WsprBand bandId;
-		Band(wxString txt_, uint32_t centreFreq_, WsprBand bandId_);
-		bool containsFreq(uint32_t f);
-	};
-
+	std::shared_ptr<DeviceModel> deviceModel;
 	uint64_t freq;
-	std::vector<Band> bands;
-	Ctl_BandSelect(wxWindow *parent, wxWindowID id);
+	std::vector<WsprBandInfo*> bands;
+	Ctl_BandSelect(wxWindow *parent, wxWindowID id, std::shared_ptr<DeviceModel> deviceModel_);
 
-	// Set the device version (determines which bands are supported by the hardware)
-	void setDeviceVersion(DeviceVersion deviceVersion);
+	void initChoices();
 
 	// Selects the band to which the given frequency belongs
 	void setFreq(uint64_t f);
 
-	Band* getSelectedBandInfo();
+	WsprBandInfo* getSelectedBandInfo();
 	void genFreq();
 	uint64_t getFreq();
 	WsprBand getBandId();
+
+	void addBand(WsprBandInfo* band);
+	void addBand(WsprBand bandId);
+	bool isValidFreq(uint64_t f) const;
 };
 
 
