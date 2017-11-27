@@ -94,3 +94,9 @@ bool StrUtil::startsWith(std::string txt, std::string prefix)
 	return (txt.compare(0, prefix.size(), prefix)==0);
 }
 
+std::string StrUtil::trim(std::string s)
+{
+	auto it1 = std::find_if_not(s.begin(), s.end(), [](char c){return std::isspace(c);});
+	auto it2 = std::find_if_not(s.rbegin(), s.rend(), [](char c){return std::isspace(c);}).base();
+	return (it2>it1 ? std::string(it1, it2) : "");
+}

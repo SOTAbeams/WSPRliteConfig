@@ -4,6 +4,7 @@
 #include "common/dxplorer.hpp"
 #include "common/StrUtil.hpp"
 #include "common/PaBias.hpp"
+#include "common/WsprCallsign.hpp"
 
 #include <wx/hyperlink.h>
 #include <wx/valnum.h>
@@ -219,7 +220,12 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 {
 	checkFreqOverride();
 
-	std::string newCallsign = std::string(txt_callsign->GetValue().Upper());
+	std::string newCallsignRaw = txt_callsign->GetValue().ToStdString();
+	std::string newCallsign = WsprCallsign::canonicalFormat(newCallsignRaw);
+	if (newCallsignRaw!=newCallsign)
+	{
+		txt_callsign->SetValue(newCallsign);
+	}
 	if (cfg.callsign!=newCallsign)
 		cfg.changeCounter++;
 

@@ -1,5 +1,5 @@
 #ifndef common_MathUtil_h
-#define common_StrUtil_h
+#define common_MathUtil_h
 
 #include <cstdint>
 
