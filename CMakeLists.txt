@@ -22,6 +22,7 @@ add_executable(WSPRliteConfig src/wsprlite-config.cpp ${SRC_rc})
 target_link_libraries(dxplorer_ui dxplorer_common)
 target_link_libraries(WSPRliteConfig dxplorer_common dxplorer_ui)
 
+add_executable(TimeslotGen tools/timeslotgen.c)
 
 if((${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
 	include_directories(${CMAKE_SYSROOT}/include)
