@@ -438,7 +438,8 @@ void WSPRConfigFrame::doFirmwareUpdate()
 		}
 		FirmwareUpdateProgressDlg dlg(this, deviceModel, fwChooseDlg.newFirmware);
 		dlg.ShowModal();
-		deviceConnect();
+		SetStatusText(_("Connecting..."));
+		connectStartComm(true);
 	}
 }
 
