@@ -6,11 +6,20 @@ void Task_Connect::updateBootloaderState()
 	deviceModel->bootloaderState = r.msg.data.parse_int_le<uint8_t>();
 }
 
+void Task_Connect::updateVersions()
+{
+	DeviceInfo deviceInfo = deviceModel->info;
+
+	DeviceComm::MsgResponse r = send(DeviceComm::MsgType::Version).assert_data();
+	deviceInfo.loadVersionsFromMsg(r.msg.data);
+
+	deviceModel->info = deviceInfo;
+}
+
 void Task_Connect::task()
 {
-	DeviceComm::MsgResponse r;
-
 	updateBootloaderState();
+	updateVersions();
 
 	if (deviceModel->bootloaderState>1)
 	{
@@ -28,14 +37,8 @@ void Task_Connect::task()
 		{
 			throw std::runtime_error("Device is in firmware update mode, settings cannot currently be changed. Please disconnect and reconnect the USB cable then try again.");
 		}
+		updateVersions();
 	}
-
-	DeviceInfo deviceInfo = deviceModel->info;
-
-	r = send(DeviceComm::MsgType::Version).assert_data();
-	deviceInfo.loadVersionsFromMsg(r.msg.data);
-
-	deviceModel->info = deviceInfo;
 }
 
 Task_Connect::~Task_Connect()

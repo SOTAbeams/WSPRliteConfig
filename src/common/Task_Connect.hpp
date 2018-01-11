@@ -7,6 +7,7 @@ class Task_Connect : public DeviceCommTask
 {
 protected:
 	void updateBootloaderState();
+	void updateVersions();
 public:
 	using DeviceCommTask::DeviceCommTask;
 	void task() override;
