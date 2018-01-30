@@ -56,7 +56,7 @@ WsprBandInfoStore::WsprBandInfoStore()
 	// 60m unsupported for now, since there is disagreement over band allocation and WSPR frequency between countries
 	// If you want to use 60m, check your local band plan to see which frequency you are allowed to transmit on, and adjust the value below if necessary. Permitted frequencies may include 5288700 or 5366200 depending on your location.
 	//add(new WsprBandInfo(60, WsprBand::Band_60m, 5288700ULL));
-	add(new WsprBandInfo(80, WsprBand::Band_80m, 3594100ULL));
+	add(new WsprBandInfo(80, WsprBand::Band_80m, 3570100ULL));
 	add(new WsprBandInfo(160, WsprBand::Band_160m, 1838100ULL));
 	add(new WsprBandInfo(630, WsprBand::Band_630m, 475700ULL));
 }
