@@ -324,9 +324,13 @@ void Box_WSPRSettings::updateStatsLink()
 	if (deviceModel->config.callsign!="" && deviceModel->info.auth.id)
 	{
 		std::string key = DXplorer::generateKey(deviceModel->info.auth.id, deviceModel->info.auth.secret, deviceModel->config.changeCounter, deviceModel->config.callsign);
+		WsprBandInfo *bandInfo = WsprBandInfo::findByFreq(deviceModel->config.transmitFreq);
 		url += "wspr/tx/";
 		// TODO: ideally, callsign would be URL-encoded here, but the current restrictions on valid WSPR callsigns mean that not doing encoding is OK at the moment
-		url += "?callsign=" + deviceModel->config.callsign + "&key=" + key;
+		url += "?callsign=" + deviceModel->config.callsign;
+		if (bandInfo)
+			url += "&band=" + std::to_string(bandInfo->getBandCode());
+		url += "&key=" + key;
 	}
 	statsUrl = url;
 
