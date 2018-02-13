@@ -23,8 +23,8 @@ void Ctl_BandSelect::initChoices()
 	addBand(WsprBand::Band_20m);
 	addBand(WsprBand::Band_30m);
 	addBand(WsprBand::Band_40m);
-	// Note: to enable 60m, uncomment the relevant line in src/common/WsprBand.cpp
-	addBand(WsprBand::Band_60m);
+	addBand(WsprBand::Band_60m_52887);
+	addBand(WsprBand::Band_60m_53662);
 	addBand(WsprBand::Band_80m);
 	addBand(WsprBand::Band_160m);
 	addBand(WsprBand::Band_630m);
@@ -69,7 +69,7 @@ void Ctl_BandSelect::genFreq()
 {
 	if (getSelectedBandInfo()!=nullptr)
 	{
-		freq = randomFreqGenerator.generate(deviceModel, getBandId());
+		freq = randomFreqGenerator.generate(deviceModel, getSelectedBandInfo()->centreFreq);
 	}
 }
 
@@ -88,7 +88,7 @@ uint64_t Ctl_BandSelect::getFreq()
 WsprBand Ctl_BandSelect::getBandId()
 {
 	if (getSelectedBandInfo()!=nullptr)
-		return getSelectedBandInfo()->bandId;
+		return getSelectedBandInfo()->getBandId();
 	else
 		return WsprBand::Band_20m;
 }
@@ -102,7 +102,7 @@ void Ctl_BandSelect::addBand(WsprBandInfo *band)
 
 void Ctl_BandSelect::addBand(WsprBand bandId)
 {
-	addBand(WsprBandInfo::find(bandId));
+	addBand(WsprBandInfo::findById(bandId));
 }
 
 bool Ctl_BandSelect::isValidFreq(uint64_t f) const

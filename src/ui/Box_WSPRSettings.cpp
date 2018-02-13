@@ -244,8 +244,6 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 		cfg.locator[i] = std::toupper(cfg.locator[i]);
 	}
 
-	cfg.band = ctl_band->getBandId();
-
 	cfg.biasSource = ctl_biasSelect->get();
 
 	cfg.outputPower_dBm = ctl_outputPowerSelect->getdBm();

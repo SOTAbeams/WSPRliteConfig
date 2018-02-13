@@ -12,12 +12,12 @@ class RandomFreqGenerator
 {
 protected:
 	std::mt19937 rng;
-	int getBandwidth(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId);
-	uint64_t uniformGen(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId);
-	uint64_t usageBasedGen(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId);
+	int getBandwidth(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq);
+	uint64_t uniformGen(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq);
+	uint64_t usageBasedGen(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq);
 public:
 	RandomFreqGenerator();
-	uint64_t generate(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId);
+	uint64_t generate(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq);
 };
 
 extern RandomFreqGenerator randomFreqGenerator;

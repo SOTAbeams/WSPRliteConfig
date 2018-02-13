@@ -1,4 +1,5 @@
 #include "WsprBand.hpp"
+#include <cmath>
 
 WsprBandInfoStore allBandsInfo;
 
@@ -17,10 +18,17 @@ uint64_t WsprBandInfo::getMaxFreq() const
 	return centreFreq+100;
 }
 
+uint32_t WsprBandInfo::getBandCode() const
+{
+	return std::floor(centreFreq/1e6);
+}
+
 std::string WsprBandInfo::toString_shortMHz()
 {
 	char tmp[100];
-	if (centreFreq < 1e6) {
+	if (bandId == WsprBand::Band_60m_52887 || bandId == WsprBand::Band_60m_53662) {
+		sprintf(tmp, "%.4f MHz", centreFreq / 1e6);
+	} else if (centreFreq < 1e6) {
 		sprintf(tmp, "%.2f MHz", centreFreq / 1e6);
 	} else if (centreFreq < 7e6) {
 		sprintf(tmp, "%.1f MHz", centreFreq / 1e6);
@@ -30,16 +38,39 @@ std::string WsprBandInfo::toString_shortMHz()
 	return tmp;
 }
 
-WsprBandInfo* WsprBandInfo::find(WsprBand bandId)
+WsprBand WsprBandInfo::getBandId() const
 {
-	auto it = allBandsInfo.bands.find(bandId);
-	if (it!=allBandsInfo.bands.end())
+	return bandId;
+}
+
+WsprBandInfo* WsprBandInfo::findByCentre(uint64_t centreFreq)
+{
+	auto it = allBandsInfo.bandsByCentre.find(centreFreq);
+	if (it!=allBandsInfo.bandsByCentre.end())
+		return it->second;
+	return nullptr;
+}
+
+WsprBandInfo* WsprBandInfo::findByFreq(uint64_t f)
+{
+	for (WsprBandInfo *b : allBandsInfo.allBands)
+	{
+		if (b->containsFreq(f))
+			return b;
+	}
+	return nullptr;
+}
+
+WsprBandInfo *WsprBandInfo::findById(WsprBand id)
+{
+	auto it = allBandsInfo.bandsById.find(id);
+	if (it!=allBandsInfo.bandsById.end())
 		return it->second;
 	return nullptr;
 }
 
 WsprBandInfo::WsprBandInfo(uint32_t approxWl_, WsprBand bandId_, uint64_t centreFreq_) :
-approxWl(approxWl_), bandId(bandId_), centreFreq(centreFreq_)
+bandId(bandId_), approxWl(approxWl_), centreFreq(centreFreq_)
 {}
 
 
@@ -53,9 +84,10 @@ WsprBandInfoStore::WsprBandInfoStore()
 	add(new WsprBandInfo(20, WsprBand::Band_20m, 14097100ULL));
 	add(new WsprBandInfo(30, WsprBand::Band_30m, 10140200ULL));
 	add(new WsprBandInfo(40, WsprBand::Band_40m, 7040100ULL));
-	// 60m unsupported for now, since there is disagreement over band allocation and WSPR frequency between countries
-	// If you want to use 60m, check your local band plan to see which frequency you are allowed to transmit on, and adjust the value below if necessary. Permitted frequencies may include 5288700 or 5366200 depending on your location.
-	//add(new WsprBandInfo(60, WsprBand::Band_60m, 5288700ULL));
+	// 60m band allocation varies between countries
+	// If you want to use 60m, check your local band plan to see which frequency you are allowed to transmit on, and adjust one of the values below if necessary. Common frequencies are 5288700 or 5366200.
+	add(new WsprBandInfo(60, WsprBand::Band_60m_52887, 5288700ULL));
+	add(new WsprBandInfo(60, WsprBand::Band_60m_53662, 5366200ULL));
 	add(new WsprBandInfo(80, WsprBand::Band_80m, 3570100ULL));
 	add(new WsprBandInfo(160, WsprBand::Band_160m, 1838100ULL));
 	add(new WsprBandInfo(630, WsprBand::Band_630m, 475700ULL));
@@ -63,12 +95,14 @@ WsprBandInfoStore::WsprBandInfoStore()
 
 WsprBandInfoStore::~WsprBandInfoStore()
 {
-	for (auto it : bands) {
-		delete it.second;
+	for (WsprBandInfo *b : allBands) {
+		delete b;
 	}
 }
 
 void WsprBandInfoStore::add(WsprBandInfo *band)
 {
-	bands.insert(std::make_pair(band->bandId, band));
+	bandsById.insert(std::make_pair(band->getBandId(), band));
+	bandsByCentre.insert(std::make_pair(band->centreFreq, band));
+	allBands.push_back(band);
 }

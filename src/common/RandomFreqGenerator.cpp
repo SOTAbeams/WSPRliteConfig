@@ -15,7 +15,6 @@ class DataPoint
 public:
 	uint64_t freq;
 	double usage;
-	WsprBand getBandId() const;
 };
 
 class BandData
@@ -34,8 +33,8 @@ class Data
 {
 public:
 	int binSize;
-	std::map<WsprBand, BandData*> data;
-	BandData* getBandData(WsprBand bandId);
+	std::map<uint64_t, BandData*> data;
+	BandData* getBandData(uint64_t centreFreq);
 	void insertPoint(DataPoint pt);
 	Data();
 	~Data();
@@ -46,14 +45,9 @@ Data data;
 
 
 
-WsprBand DataPoint::getBandId() const
+BandData* Data::getBandData(uint64_t centreFreq)
 {
-	return (WsprBand)std::floor(freq/1e6);
-}
-
-BandData* Data::getBandData(WsprBand bandId)
-{
-	auto it = data.find(bandId);
+	auto it = data.find(centreFreq);
 	if (it==data.end()) {
 		return nullptr;
 	}
@@ -62,10 +56,11 @@ BandData* Data::getBandData(WsprBand bandId)
 
 void Data::insertPoint(DataPoint pt)
 {
-	WsprBand bandId = pt.getBandId();
-	auto it = data.find(bandId);
+	WsprBandInfo *band = WsprBandInfo::findByFreq(pt.freq);
+	uint64_t centreFreq = band ? band->centreFreq : 0;
+	auto it = data.find(centreFreq);
 	if (it==data.end()) {
-		it = data.insert(std::make_pair(bandId, new BandData())).first;
+		it = data.insert(std::make_pair(centreFreq, new BandData())).first;
 	}
 	it->second->insertPoint(pt);
 }
@@ -109,14 +104,14 @@ void BandData::insertPoint(DataPoint pt)
 }
 
 
-int RandomFreqGenerator::getBandwidth(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId)
+int RandomFreqGenerator::getBandwidth(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq)
 {
 	// Default value, for devices that have not had their oscillator calibrated
 	int bandwidth = 100;
 
 	if (deviceModel->hasCalibratedOscillator())
 	{
-		WsprBandInfo *band = WsprBandInfo::find(bandId);
+		WsprBandInfo *band = WsprBandInfo::findByCentre(centreFreq);
 		if (band==nullptr)
 			return bandwidth;
 
@@ -138,18 +133,18 @@ int RandomFreqGenerator::getBandwidth(std::shared_ptr<DeviceModel> deviceModel, 
 	return bandwidth;
 }
 
-uint64_t RandomFreqGenerator::uniformGen(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId)
+uint64_t RandomFreqGenerator::uniformGen(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq)
 {
-	WsprBandInfo *band = WsprBandInfo::find(bandId);
+	WsprBandInfo *band = WsprBandInfo::findByCentre(centreFreq);
 	if (band==nullptr)
 		return 0;
 
-	int bandwidth = getBandwidth(deviceModel, bandId);
+	int bandwidth = getBandwidth(deviceModel, centreFreq);
 	std::uniform_int_distribution<> randDist(-bandwidth/2, bandwidth/2);
 	return band->centreFreq + randDist(rng);
 }
 
-uint64_t RandomFreqGenerator::usageBasedGen(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId)
+uint64_t RandomFreqGenerator::usageBasedGen(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq)
 {
 	// Rejection sampling, based on data about how often the different frequencies available within a band are used.
 
@@ -158,14 +153,14 @@ uint64_t RandomFreqGenerator::usageBasedGen(std::shared_ptr<DeviceModel> deviceM
 	// How much importance to give the usage data. 1=generate entirely according to the usage data and never generate a frequency in the region of max usage; 0=usage data is ignored
 	double usageWeight = 0.95;
 
-	FreqUsageData::BandData *bandUsageData = FreqUsageData::data.getBandData(bandId);
+	FreqUsageData::BandData *bandUsageData = FreqUsageData::data.getBandData(centreFreq);
 	int binSize = FreqUsageData::data.binSize;
 	if (bandUsageData==nullptr)
 		return 0;
-	WsprBandInfo *band = WsprBandInfo::find(bandId);
+	WsprBandInfo *band = WsprBandInfo::findByCentre(centreFreq);
 	if (band==nullptr)
 		return 0;
-	int bandwidth = getBandwidth(deviceModel, bandId);
+	int bandwidth = getBandwidth(deviceModel, centreFreq);
 
 	std::uniform_int_distribution<> freqOffsetDist(-bandwidth/2, bandwidth/2);
 	std::uniform_real_distribution<> acceptDist(0.0, 1.0); // 0.0 <= x < 1.0
@@ -187,13 +182,13 @@ RandomFreqGenerator::RandomFreqGenerator() :
 
 }
 
-uint64_t RandomFreqGenerator::generate(std::shared_ptr<DeviceModel> deviceModel, WsprBand bandId)
+uint64_t RandomFreqGenerator::generate(std::shared_ptr<DeviceModel> deviceModel, uint64_t centreFreq)
 {
 	if (deviceModel->hasCalibratedOscillator())
 	{
-		uint64_t freq = usageBasedGen(deviceModel, bandId);
+		uint64_t freq = usageBasedGen(deviceModel, centreFreq);
 		if (freq!=0)
 			return freq;
 	}
-	return uniformGen(deviceModel, bandId);
+	return uniformGen(deviceModel, centreFreq);
 }

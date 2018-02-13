@@ -198,7 +198,6 @@ class DeviceConfig
 {
 public:
 	std::string callsign, locator;
-	WsprBand band;
 	uint32_t transmitFreq;
 	int8_t outputPower_dBm;
 	uint16_t paBias;

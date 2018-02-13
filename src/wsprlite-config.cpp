@@ -62,6 +62,7 @@ private:
 	void WSPRCtlsEnabled(bool status);
 	void startStatusUpdate();
 	void doFirmwareUpdate();
+	bool confirm60m();
 
 	void OnExit(wxCommandEvent& event);
 	void LoadWSPR(wxCommandEvent& event);
@@ -247,6 +248,13 @@ void WSPRConfigFrame::deviceSave()
 	{
 		wxMessageBox(_("WSPR ident is invalid. It must consist of 1 or 2 letters/numbers, then a number, then up to 3 letters."), _("Invalid WSPR ident"), wxOK | wxICON_ERROR );
 		return;
+	}
+	WsprBandInfo *oldBand = WsprBandInfo::findByFreq(deviceModel->config.transmitFreq);
+	WsprBandInfo *newBand = WsprBandInfo::findByFreq(task->newCfg.transmitFreq);
+	if (newBand!=oldBand && newBand && (newBand->getBandId()==WsprBand::Band_60m_52887 || newBand->getBandId()==WsprBand::Band_60m_53662))
+	{
+		if (!confirm60m())
+			return;
 	}
 
 	SetStatusText(_("Saving..."));
@@ -440,6 +448,14 @@ void WSPRConfigFrame::doFirmwareUpdate()
 		SetStatusText(_("Connecting..."));
 		connectStartComm(true);
 	}
+}
+
+bool WSPRConfigFrame::confirm60m()
+{
+	wxMessageDialog dlg(this, "", "Check your 60m band plan", wxOK | wxCANCEL | wxCANCEL_DEFAULT | wxCENTRE | wxICON_EXCLAMATION);
+	dlg.SetMessage("Are you allowed to transmit on this frequency? \n\nNot all countries allow transmission on the commonly used 60m WSPR frequencies. Please check local regulations - it is the responsibility of the amateur radio operator (the WSPRlite owner) to avoid transmitting on the wrong frequency and causing interference."
+	);
+	return (dlg.ShowModal()==wxID_OK);
 }
 
 void WSPRConfigFrame::OnExit(wxCommandEvent& event)

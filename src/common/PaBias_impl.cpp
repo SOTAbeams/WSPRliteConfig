@@ -1,5 +1,6 @@
 #include "PaBias_impl.hpp"
 #include "common/MathUtil.hpp"
+#include "common/WsprBand.hpp"
 
 #include <cmath>
 #include <vector>
@@ -103,6 +104,10 @@ DataIndex_Frequency::Type_K DataIndex_Frequency::getKey(const Query &q)
 	return q.freq;
 }
 
+
+// There have been some slight changes in band frequency, but since the new frequency is close to the old one, the old data should suffice for now.
+// The data is therefore indexed by the WSPRnet band code, which for 630m and higher frequencies is an integer representing the MHz component of the frequency. This code stays the same for each band even when the frequency changes slightly.
+
 DataIndex_Band::Type_K DataIndex_Band::getKey(const DataPoint &pt)
 {
 	return (int)std::floor(pt.freq/1e6);
@@ -115,7 +120,10 @@ DataIndex_Band::Type_K DataIndex_Band::getKey(const Query &q)
 
 bool DataIndex_Band::hasBand(WsprBand b)
 {
-	return hasKey((int)b);
+	WsprBandInfo *bandInfo = WsprBandInfo::findById(b);
+	if (!bandInfo)
+		return false;
+	return hasKey(bandInfo->getBandCode());
 }
 
 

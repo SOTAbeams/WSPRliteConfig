@@ -37,8 +37,7 @@ bool FirmwareVersion::supports_band(WsprBand b) const
 	if (b == WsprBand::Band_630m) {
 		return ((*this) >= FirmwareVersion(1, 0, 6, 20170130));
 	}
-	// (int)band = floor(centre freq), so 15 and higher is all bands above 14MHz
-	if ((int)b > 15) {
+	if (WsprBandInfo::findById(b)->centreFreq > 15e6) {
 		return ((*this) >= FirmwareVersion(1, 1, 0, 20170605));
 	}
 	return true;
