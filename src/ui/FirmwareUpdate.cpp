@@ -14,7 +14,7 @@ public:
 	wxString errorMsg;
 };
 
-void FirmwareUpdate_runUi(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel, HexFile hexFile)
+bool FirmwareUpdate_runUi(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel, HexFile hexFile)
 {
 	const int progressScale = 10000;
 	Task_FirmwareUpdate task(deviceModel);
@@ -59,15 +59,21 @@ void FirmwareUpdate_runUi(wxWindow *parent, std::shared_ptr<DeviceModel> deviceM
 		wxMilliSleep(50);
 	}
 
+	if (actionThread.joinable())
+		actionThread.join();
+
 	{
 		std::lock_guard<std::mutex> lk(state.mtx);
 		progressDlg.Update(progressScale, state.progressMsg);
 		if (!state.success)
 		{
 			wxMessageBox("Firmware update failed.\n" + state.errorMsg, _("Error"), wxOK | wxICON_ERROR );
+			return false;
+		}
+		else
+		{
+			return true;
 		}
 	}
 
-	if (actionThread.joinable())
-		actionThread.join();
 }

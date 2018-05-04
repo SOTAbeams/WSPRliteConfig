@@ -9,6 +9,6 @@
 #include "common/Device.hpp"
 #include "common/HexFile.hpp"
 
-void FirmwareUpdate_runUi(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel, HexFile hexFile);
+bool FirmwareUpdate_runUi(wxWindow *parent, std::shared_ptr<DeviceModel> deviceModel, HexFile hexFile);
 
 #endif
