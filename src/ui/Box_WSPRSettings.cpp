@@ -5,6 +5,7 @@
 #include "common/StrUtil.hpp"
 #include "common/PaBias.hpp"
 #include "common/WsprCallsign.hpp"
+#include "common/WsprMsgTypes.hpp"
 
 #include <wx/hyperlink.h>
 #include <wx/valnum.h>
@@ -39,6 +40,9 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 
 	int row = 0;
 
+	// Min width for controls column
+	wsprSizer->Add(350, 1, wxGBPosition(row++,1));
+
 	{
 		// Title
 		wxSizerFlags szFlags = wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL);
@@ -54,7 +58,7 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 
 	txt_callsign = new wxTextCtrl(formParent, wxID_ANY);
 	txt_callsign->Bind(wxEVT_TEXT, &Box_WSPRSettings::OnCallsignChanged, this);
-	addFormRow(row++, _("WSPR ident:"), txt_callsign);
+	addFormRow(row++, _("WSPR callsign:"), txt_callsign);
 
 	ctl_cwId_enable = new wxCheckBox(formParent, wxID_ANY, "");
 	ctl_cwId_enable->Bind(wxEVT_CHECKBOX, &Box_WSPRSettings::OnCWIDEnableChange, this);
@@ -68,10 +72,16 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 
 	txt_locator = new wxTextCtrl(formParent, wxID_ANY);
 	txt_locator->SetValidator(MaidenheadValidator());
+	txt_locator->Bind(wxEVT_TEXT, &Box_WSPRSettings::OnLocatorChanged, this);
 	addFormRow(row++, _("Locator:"), txt_locator);
 
-	addFormRow(row++, nullptr, new wxStaticText(formParent, wxID_ANY, _("Note: the WSPR protocol limits the locator\nto 4 characters (e.g. JN29)")));
 	addCtl(new wxHyperlinkCtrl(formParent, wxID_ANY, _("Find my locator"), "http://qthlocator.free.fr/"), wxGBPosition(row++, 1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Border(wxALL, 0));
+
+	ctl_forceExtendedWspr = new wxCheckBox(formParent, wxID_ANY, "");
+	ctl_forceExtendedWspr->Bind(wxEVT_CHECKBOX, &Box_WSPRSettings::OnForceExtendedWsprChange, this);
+	addFormRow(row++, nullptr, ctl_forceExtendedWspr);
+	msg_wsprMsgTypes = new wxStaticText(formParent, wxID_ANY, "");
+	addFormRow(row++, nullptr, msg_wsprMsgTypes);
 
 	ctl_band = new Ctl_BandSelect(formParent, wxID_ANY, deviceModel);
 	ctl_band->Bind(wxEVT_COMBOBOX, &Box_WSPRSettings::OnBandChanged, this);
@@ -142,6 +152,8 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	updateStatsLink();
 	updateTxFreqText();
 	cwIdCtls_updateStatus();
+	extendedWsprCtls_updateStatus();
+	updateWsprMsgTypesText();
 
 	SetSizerAndFit(wsprSizer);
 }
@@ -170,7 +182,13 @@ void Box_WSPRSettings::OnBiasSelectChanged(wxCommandEvent &event)
 
 void Box_WSPRSettings::OnCallsignChanged(wxCommandEvent &event)
 {
+	updateWsprMsgTypesText();
 	updateStatsLink();
+}
+
+void Box_WSPRSettings::OnLocatorChanged(wxCommandEvent &event)
+{
+	updateWsprMsgTypesText();
 }
 
 void Box_WSPRSettings::EnableCtls(bool status)
@@ -199,10 +217,12 @@ void Box_WSPRSettings::EnableCtls(bool status)
 	{
 		ctl_cwId_enable->Enable(status);
 		ctl_cwId_callsign->Enable(status);
+		ctl_forceExtendedWspr->Enable(status);
 	}
 	else
 	{
 		cwIdCtls_updateStatus();
+		extendedWsprCtls_updateStatus();
 	}
 	onCtlsChanged();
 }
@@ -274,6 +294,10 @@ void Box_WSPRSettings::getFields(DeviceConfig &cfg)
 		cfg.cwId_freq = ctl_band->getSelectedBandInfo()->centreFreq - 150;
 	else
 		cfg.cwId_freq = 0;
+
+	cfg.optionFlags = 0;
+	if (ctl_forceExtendedWspr->IsChecked())
+		cfg.optionFlags |= DeviceComm::VarFlag::WSPR_option_forceExtended;
 }
 
 void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
@@ -293,6 +317,7 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 	ctl_band->setFreq(cfg.transmitFreq);
 	ctl_cwId_callsign->SetValue(cfg.cwId_callsign);
 	ctl_cwId_enable->SetValue(deviceModel->info.firmwareVersion.supports_cwId() && cfg.cwId_freq && cfg.cwId_callsign!="");
+	ctl_forceExtendedWspr->SetValue(cfg.optionFlags & DeviceComm::VarFlag::WSPR_option_forceExtended);
 	if (cfg.changeCounter<=1)
 	{
 		ctl_band->genFreq();
@@ -303,6 +328,8 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 	updateAvailableOutputPowers();
 	updateMaxDurationValidator();
 	updateBiasSelectText();
+	extendedWsprCtls_updateStatus();
+	updateWsprMsgTypesText();
 	onCtlsChanged();
 }
 
@@ -326,11 +353,10 @@ void Box_WSPRSettings::updateStatsLink()
 		std::string key = DXplorer::generateKey(deviceModel->info.auth.id, deviceModel->info.auth.secret, deviceModel->config.changeCounter, deviceModel->config.callsign);
 		WsprBandInfo *bandInfo = WsprBandInfo::findByFreq(deviceModel->config.transmitFreq);
 		url += "wspr/tx/";
-		// TODO: ideally, callsign would be URL-encoded here, but the current restrictions on valid WSPR callsigns mean that not doing encoding is OK at the moment
-		url += "?callsign=" + deviceModel->config.callsign;
+		url += "?callsign=" + StrUtil::url_encode(deviceModel->config.callsign);
 		if (bandInfo)
-			url += "&band=" + std::to_string(bandInfo->getBandCode());
-		url += "&key=" + key;
+			url += "&band=" + StrUtil::url_encode(std::to_string(bandInfo->getBandCode()));
+		url += "&key=" + StrUtil::url_encode(key);
 	}
 	statsUrl = url;
 
@@ -448,6 +474,73 @@ void Box_WSPRSettings::updateBiasSelectText()
 	onCtlsChanged();
 }
 
+void Box_WSPRSettings::updateWsprMsgTypesText()
+{
+	WsprMsgTypes msgTypes = WsprMsgTypes::None;
+	std::string newCallsignRaw = txt_callsign->GetValue().ToStdString();
+	std::string newCallsign = WsprCallsign::canonicalFormat(newCallsignRaw);
+	bool locatorTooShort = false;
+	if (!deviceModel || !deviceModel->info.firmwareVersion.isValidCallsign(newCallsign))
+	{
+		msgTypes = WsprMsgTypes::None;
+	}
+	else if (WsprCallsign::isCompound(newCallsign))
+	{
+		msgTypes = WsprMsgTypes::Type2_3;
+	}
+	else if (deviceModel->info.firmwareVersion.supports_extendedWspr() && ctl_forceExtendedWspr->IsChecked())
+	{
+		if (txt_locator->GetValue().Len()<6)
+		{
+			msgTypes = WsprMsgTypes::Type1;
+			locatorTooShort = true;
+		}
+		else
+		{
+			msgTypes = WsprMsgTypes::Type1_3;
+		}
+	}
+	else
+	{
+		msgTypes = WsprMsgTypes::Type1;
+	}
+	switch (msgTypes)
+	{
+	case WsprMsgTypes::None:
+		msg_wsprMsgTypes->SetLabelText(_("Callsign is not valid"));
+		break;
+	case WsprMsgTypes::Type1:
+		if (locatorTooShort)
+			msg_wsprMsgTypes->SetLabelText(_("Will use standard WSPR (type 1 messages).\nTo use extended WSPR, enter a 6 character locator."));
+		else
+			msg_wsprMsgTypes->SetLabelText(_("Will use standard WSPR (type 1 messages).\nThe transmitted locator will be limited to 4 characters."));
+		break;
+	case WsprMsgTypes::Type2_3:
+		msg_wsprMsgTypes->SetLabelText(_("Will use extended WSPR (type 2 & 3 messages), \ndue to the compound callsign.\nThis may reduce the number of spots that you get."));
+		break;
+	case WsprMsgTypes::Type1_3:
+		msg_wsprMsgTypes->SetLabelText(_("Will use extended WSPR (type 1 & 3 messages).\nThis may reduce the number of spots that you get."));
+		break;
+	}
+	//msg_wsprMsgTypes->Wrap(txt_callsign->GetSize().GetWidth());
+	onCtlsChanged();
+}
+
+void Box_WSPRSettings::extendedWsprCtls_updateStatus()
+{
+	bool connValid = deviceModel && deviceModel->conn && deviceModel->conn->isValid();
+	bool isSupported = deviceModel->info.firmwareVersion.supports_extendedWspr();
+	ctl_forceExtendedWspr->Enable(isSupported);
+	if (isSupported || !connValid)
+	{
+		ctl_forceExtendedWspr->SetLabelText("Always transmit 6 character locator");
+	}
+	else
+	{
+		ctl_forceExtendedWspr->SetLabelText("Extended WSPR unsupported, update firmware");
+	}
+}
+
 void Box_WSPRSettings::OnBtnStats(wxCommandEvent &event)
 {
 	wxLaunchDefaultBrowser(statsUrl);
@@ -461,12 +554,17 @@ void Box_WSPRSettings::OnCWIDEnableChange(wxCommandEvent &event)
 			"The CW callsign feature transmits your callsign in morse code at the end of each WSPR message, 50 Hz below the WSPR band.\n\n"
 			"Uses:\n"
 			"1) To identify your transmission where the standard WSPR protocol will "
-			"not suffice (such as using a compound callsign e.g. 9X5/G3CWI/P).\n"
+			"not suffice (such as a callsign that does not follow the format required by WSPR).\n"
 			"2) To meet regulatory requirements in some countries.\n\n"
 			"We do not recommend use of CW identification unless it is actually necessary.");
 		wxMessageBox(msg, _("CW callsign"), wxOK | wxICON_INFORMATION );
 	}
 	cwIdCtls_updateStatus();
+}
+
+void Box_WSPRSettings::OnForceExtendedWsprChange(wxCommandEvent &event)
+{
+	updateWsprMsgTypesText();
 }
 
 void Box_WSPRSettings::OnFreqUnfocus(wxFocusEvent &event)

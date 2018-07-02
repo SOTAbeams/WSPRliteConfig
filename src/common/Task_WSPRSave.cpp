@@ -27,6 +27,10 @@ void Task_WSPRSave::task()
 	{
 		send(DeviceComm::genMsg_write_int<uint8_t>(DeviceComm::VarId::PaBiasSource, (int)newCfg.biasSource)).assert_ack();
 	}
+	if (deviceModel->info.firmwareVersion.supports_varId(DeviceComm::VarId::WSPR_optionFlags))
+	{
+		send(DeviceComm::genMsg_write_int<uint8_t>(DeviceComm::VarId::WSPR_optionFlags, newCfg.optionFlags)).assert_ack();
+	}
 
 	deviceModel->config = newCfg;
 }

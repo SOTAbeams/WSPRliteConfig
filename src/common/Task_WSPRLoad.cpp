@@ -59,6 +59,16 @@ void Task_WSPRLoad::task()
 		cfg.biasSource = PaBiasSource::Default;
 	}
 
+	if (deviceInfo.firmwareVersion.supports_varId(DeviceComm::VarId::WSPR_optionFlags))
+	{
+		r = send(DeviceComm::genMsg_read(DeviceComm::VarId::WSPR_optionFlags)).assert_data();
+		cfg.optionFlags = r.msg.data.parse_int_le<uint8_t>();
+	}
+	else
+	{
+		cfg.optionFlags = 0;
+	}
+
 	deviceModel->config = cfg;
 	deviceModel->info = deviceInfo;
 }

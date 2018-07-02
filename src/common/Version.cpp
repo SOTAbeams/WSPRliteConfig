@@ -1,6 +1,7 @@
 #include "Version.hpp"
 #include "Device.hpp"
 #include "StrUtil.hpp"
+#include "WsprCallsign.hpp"
 
 FirmwareVersion::FirmwareVersion() :
 	majorVersion(0), minorVersion(0), patchVersion(0), releaseDate(0)
@@ -138,5 +139,26 @@ bool FirmwareVersion::supports_varId(DeviceComm::VarId v) const
 		return ((*this) >= FirmwareVersion(1,0,6,20170130));
 	if (v==DeviceComm::VarId::PaBiasSource)
 		return ((*this) >= FirmwareVersion(1,1,3,20171012));
+	if (v==DeviceComm::VarId::WSPR_optionFlags)
+		return ((*this) >= FirmwareVersion(1,1,5,20180702));
 	return false;
 }
+
+bool FirmwareVersion::supports_compoundCallsigns() const
+{
+	return supports_extendedWspr();
+}
+
+bool FirmwareVersion::supports_extendedWspr() const
+{
+	return ((*this) >= FirmwareVersion(1,1,5,20180702));
+}
+
+bool FirmwareVersion::isValidCallsign(std::string x) const
+{
+	if (supports_compoundCallsigns())
+		return WsprCallsign::isValid(x);
+	else
+		return WsprCallsign::isBasic(x);
+}
+

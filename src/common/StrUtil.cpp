@@ -3,6 +3,7 @@
 #include <cctype>
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 
 int64_t StrUtil::stringToInt(std::string txt)
@@ -99,4 +100,22 @@ std::string StrUtil::trim(std::string s)
 	auto it1 = std::find_if_not(s.begin(), s.end(), [](char c){return std::isspace(c);});
 	auto it2 = std::find_if_not(s.rbegin(), s.rend(), [](char c){return std::isspace(c);}).base();
 	return (it2>it1 ? std::string(it1, it2) : "");
+}
+
+std::string StrUtil::url_encode(std::string s)
+{
+	std::ostringstream ss;
+	ss << std::hex << std::uppercase << std::setfill('0');
+	for (auto c : s)
+	{
+		if (std::isalnum(c) || c=='-' || c=='_' || c=='.' || c=='~')
+		{
+			ss << c;
+		}
+		else
+		{
+			ss << '%' << std::setw(2) << ((uint32_t)c);
+		}
+	}
+	return ss.str();
 }

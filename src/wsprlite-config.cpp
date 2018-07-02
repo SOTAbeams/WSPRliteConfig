@@ -16,6 +16,7 @@
 #include "common/Task_StatusCheck.hpp"
 #include "common/Task_WSPRLoad.hpp"
 #include "common/Task_WSPRSave.hpp"
+#include "common/WsprCallsign.hpp"
 
 #include <memory>
 #include <cctype>
@@ -244,9 +245,21 @@ void WSPRConfigFrame::deviceSave()
 		return;
 	}
 
-	if (!DeviceConfig::isValidCallsign(task->newCfg.callsign))
+	if (!deviceModel->info.firmwareVersion.isValidCallsign(task->newCfg.callsign))
 	{
-		wxMessageBox(_("WSPR ident is invalid. It must consist of 1 or 2 letters/numbers, then a number, then up to 3 letters."), _("Invalid WSPR ident"), wxOK | wxICON_ERROR );
+		if (deviceModel->info.firmwareVersion.supports_compoundCallsigns())
+		{
+			wxMessageBox(_("The WSPR callsign is invalid.\n\n"
+"The main part of the callsign must consist of 1 or 2 letters/digits, then a digit, then up to 3 letters.\n\n"
+"A prefix or suffix can be added, either:\n"
+"xxx/callsign - 'xxx' is a 1 to 3 character prefix. Each 'x' can be any digit or letter or a space.\n"
+"callsign/x - where 'x' can be any digit or letter.\n"
+"callsign/dd - where 'dd' is a 2 digit number from 10 to 99."), _("Invalid WSPR callsign"), wxOK | wxICON_ERROR );
+		}
+		else
+		{
+			wxMessageBox(_("WSPR callsign is invalid. It must consist of 1 or 2 letters/numbers, then a number, then up to 3 letters.\n\nTo add support for compound callsigns (a short prefix or suffix added to the callsign), update the firmware."), _("Invalid WSPR callsign"), wxOK | wxICON_ERROR );
+		}
 		return;
 	}
 	WsprBandInfo *oldBand = WsprBandInfo::findByFreq(deviceModel->config.transmitFreq);

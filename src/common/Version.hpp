@@ -45,6 +45,11 @@ public:
 	bool supports_driveStrength() const;
 	bool supports_varId(DeviceComm::VarId v) const;
 	bool supports_device(DeviceVersion deviceVersion) const;
+	bool supports_compoundCallsigns() const;
+	bool supports_extendedWspr() const;
+
+	bool isValidCallsign(std::string x) const;
+
 };
 
 bool operator==(const FirmwareVersion &a, const FirmwareVersion &b);

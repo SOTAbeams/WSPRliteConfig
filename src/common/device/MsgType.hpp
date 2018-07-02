@@ -49,8 +49,18 @@ enum class VarId
 	CwId_Freq,
 	CwId_Callsign,
 	PaBiasSource,
+	OutputPowerAdjustAmount,// currently unused
+	WSPR_optionFlags,
 	END,
 };
+
+namespace VarFlag
+{
+enum VarFlag
+{
+	WSPR_option_forceExtended = 0x1,
+};
+}
 
 // Various subcommands used for factory testing.
 enum class TestCmd

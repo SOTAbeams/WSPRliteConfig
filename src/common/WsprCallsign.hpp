@@ -6,6 +6,9 @@
 namespace WsprCallsign
 {
 
+bool isBasic(std::string x);
+bool isCompound(std::string x);
+bool isValid(std::string x);
 std::string canonicalFormat(std::string s);
 
 }

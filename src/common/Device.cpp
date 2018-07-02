@@ -535,14 +535,6 @@ void MsgResponse::assert_success() const
 }
 
 
-
-bool DeviceConfig::isValidCallsign(std::string x)
-{
-	std::regex validCallsignRegex("^[A-Z0-9 ]?[A-Z0-9][0-9][A-Z ]{0,3}$");
-	return std::regex_match(x, validCallsignRegex);
-}
-
-
 void DeviceInfo::loadVersionsFromMsg(DeviceComm::Data &data)
 {
 	deviceVersion.loadFromMsgData(data, 0);

@@ -206,13 +206,12 @@ public:
 	int maxRuntime;
 	uint64_t xoFreq;
 	PaBiasSource biasSource;
+	uint8_t optionFlags;
 
 	uint64_t changeCounter;
 
 	uint32_t cwId_freq;
 	std::string cwId_callsign;
-
-	static bool isValidCallsign(std::string x);
 };
 
 class DeviceAuth

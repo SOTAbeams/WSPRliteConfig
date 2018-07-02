@@ -29,6 +29,8 @@ protected:
 	wxStaticText *msg_band, *msg_freq, *msg_biasSelect;
 	wxCheckBox *ctl_cwId_enable;
 	wxTextCtrl *ctl_cwId_callsign;
+	wxCheckBox *ctl_forceExtendedWspr;
+	wxStaticText *msg_wsprMsgTypes;
 	std::string statsUrl;
 	wxTextCtrl *ctl_statsUrl;
 	wxButton *ctl_statsOpen;
@@ -52,11 +54,15 @@ public:
 	void cwIdCtls_updateStatus();
 	void checkFreqOverride();
 	void updateBiasSelectText();
+	void updateWsprMsgTypesText();
+	void extendedWsprCtls_updateStatus();
 	void OnBandChanged(wxCommandEvent& event);
 	void OnBiasSelectChanged(wxCommandEvent& event);
 	void OnCallsignChanged(wxCommandEvent& event);
+	void OnLocatorChanged(wxCommandEvent& event);
 	void OnBtnStats(wxCommandEvent& event);
 	void OnCWIDEnableChange(wxCommandEvent& event);
+	void OnForceExtendedWsprChange(wxCommandEvent& event);
 	void OnFreqUnfocus(wxFocusEvent& event);
 	void EnableCtls(bool status);
 	void onCtlsChanged();

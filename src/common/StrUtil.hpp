@@ -21,6 +21,7 @@ std::string toUpper(std::string s);
 std::string trim(std::string s);
 std::vector<uint8_t> hex_decode(std::string s);
 bool hex_validate(std::string s);
+std::string url_encode(std::string s);
 
 bool startsWith(std::string txt, std::string prefix);
 
