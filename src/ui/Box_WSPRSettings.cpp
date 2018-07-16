@@ -83,6 +83,9 @@ Box_WSPRSettings::Box_WSPRSettings(wxWindow *parent, std::shared_ptr<DeviceModel
 	msg_wsprMsgTypes = new wxStaticText(formParent, wxID_ANY, "");
 	addFormRow(row++, nullptr, msg_wsprMsgTypes);
 
+	ctl_extendedWsprInfoLink = new wxHyperlinkCtrl(formParent, wxID_ANY, _("Click here to read about why extended WSPR should\nbe avoided if possible"), "http://dxplorer.net/wspr/msgtypes.html#whynot23");
+	addCtl(ctl_extendedWsprInfoLink, wxGBPosition(row++, 1), wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT).Border(wxALL, 0));
+
 	ctl_band = new Ctl_BandSelect(formParent, wxID_ANY, deviceModel);
 	ctl_band->Bind(wxEVT_COMBOBOX, &Box_WSPRSettings::OnBandChanged, this);
 	addFormRow(row++, _("Band:"), ctl_band);
@@ -183,12 +186,14 @@ void Box_WSPRSettings::OnBiasSelectChanged(wxCommandEvent &event)
 void Box_WSPRSettings::OnCallsignChanged(wxCommandEvent &event)
 {
 	updateWsprMsgTypesText();
+	extendedWsprCtls_updateStatus();
 	updateStatsLink();
 }
 
 void Box_WSPRSettings::OnLocatorChanged(wxCommandEvent &event)
 {
 	updateWsprMsgTypesText();
+	extendedWsprCtls_updateStatus();
 }
 
 void Box_WSPRSettings::EnableCtls(bool status)
@@ -322,6 +327,7 @@ void Box_WSPRSettings::setFields(const DeviceConfig &cfg)
 	{
 		ctl_band->genFreq();
 	}
+
 	cwIdCtls_updateStatus();
 	updateTxFreqText();
 	updateStatsLink();
@@ -342,6 +348,22 @@ bool Box_WSPRSettings::validate()
 	return true;
 }
 
+bool Box_WSPRSettings::isLongLocator()
+{
+	return txt_locator->GetValue().Len()>=6;
+}
+
+bool Box_WSPRSettings::isCompoundCallsign()
+{
+	std::string newCallsignRaw = txt_callsign->GetValue().ToStdString();
+	std::string newCallsign = WsprCallsign::canonicalFormat(newCallsignRaw);
+	return WsprCallsign::isCompound(newCallsign);
+}
+
+bool Box_WSPRSettings::isConnValid()
+{
+	return (deviceModel && deviceModel->conn && deviceModel->conn->isValid());
+}
 
 void Box_WSPRSettings::updateStatsLink()
 {
@@ -420,14 +442,14 @@ void Box_WSPRSettings::cwIdCtls_updateStatus()
 {
 	bool cwIdSupported = deviceModel->info.firmwareVersion.supports_cwId();
 	bool cwIdStatus = cwIdSupported && ctl_cwId_enable->GetValue();
-	bool connValid = deviceModel && deviceModel->conn && deviceModel->conn->isValid();
+	bool connValid = isConnValid();
 
 	if (!cwIdSupported)
 	{
 		ctl_cwId_enable->SetValue(false);
 	}
 	ctl_cwId_enable->Enable(cwIdSupported && connValid);
-	if (cwIdSupported || !deviceModel || !deviceModel->conn || !deviceModel->conn->isValid())
+	if (cwIdSupported || !connValid)
 	{
 		ctl_cwId_enable->SetLabelText(_("Enable (only use if absolutely necessary)"));
 	}
@@ -480,6 +502,7 @@ void Box_WSPRSettings::updateWsprMsgTypesText()
 	std::string newCallsignRaw = txt_callsign->GetValue().ToStdString();
 	std::string newCallsign = WsprCallsign::canonicalFormat(newCallsignRaw);
 	bool locatorTooShort = false;
+	bool supportsExtendedWspr = isConnValid() && deviceModel->info.firmwareVersion.supports_extendedWspr();
 	if (!deviceModel || !deviceModel->info.firmwareVersion.isValidCallsign(newCallsign))
 	{
 		msgTypes = WsprMsgTypes::None;
@@ -488,9 +511,9 @@ void Box_WSPRSettings::updateWsprMsgTypesText()
 	{
 		msgTypes = WsprMsgTypes::Type2_3;
 	}
-	else if (deviceModel->info.firmwareVersion.supports_extendedWspr() && ctl_forceExtendedWspr->IsChecked())
+	else if (supportsExtendedWspr && ctl_forceExtendedWspr->IsChecked())
 	{
-		if (txt_locator->GetValue().Len()<6)
+		if (!isLongLocator())
 		{
 			msgTypes = WsprMsgTypes::Type1;
 			locatorTooShort = true;
@@ -504,41 +527,58 @@ void Box_WSPRSettings::updateWsprMsgTypesText()
 	{
 		msgTypes = WsprMsgTypes::Type1;
 	}
+
+	std::string txt = "";
 	switch (msgTypes)
 	{
 	case WsprMsgTypes::None:
-		msg_wsprMsgTypes->SetLabelText(_("Callsign is not valid"));
+		txt = _("Callsign is not valid");
 		break;
 	case WsprMsgTypes::Type1:
+		txt = _("Will use standard WSPR (type 1 messages).");
 		if (locatorTooShort)
-			msg_wsprMsgTypes->SetLabelText(_("Will use standard WSPR (type 1 messages).\nTo use extended WSPR, enter a 6 character locator."));
-		else
-			msg_wsprMsgTypes->SetLabelText(_("Will use standard WSPR (type 1 messages).\nThe transmitted locator will be limited to 4 characters."));
+			txt += _("\nTo use extended WSPR, enter a 6 character locator.");
+		else if (isLongLocator())
+			txt += _("\nThe transmitted locator will be limited to 4 characters.");
 		break;
 	case WsprMsgTypes::Type2_3:
-		msg_wsprMsgTypes->SetLabelText(_("Will use extended WSPR (type 2 & 3 messages), \ndue to the compound callsign.\nThis may reduce the number of spots that you get."));
+		txt = _("Will use extended WSPR (type 2 & 3 messages), \ndue to the compound callsign.");
 		break;
 	case WsprMsgTypes::Type1_3:
-		msg_wsprMsgTypes->SetLabelText(_("Will use extended WSPR (type 1 & 3 messages).\nThis may reduce the number of spots that you get."));
+		txt = _("Will use extended WSPR (type 1 & 3 messages).");
 		break;
 	}
+	if (msgTypes==WsprMsgTypes::Type2_3 || msgTypes==WsprMsgTypes::Type1_3)
+	{
+		ctl_extendedWsprInfoLink->Show(true);
+	}
+	else
+	{
+		ctl_extendedWsprInfoLink->Show(false);
+	}
+	if (!supportsExtendedWspr)
+		txt = _("Extended WSPR unsupported, update firmware");
+	msg_wsprMsgTypes->SetLabelText(txt);
+	msg_wsprMsgTypes->Show(isConnValid());
 	//msg_wsprMsgTypes->Wrap(txt_callsign->GetSize().GetWidth());
 	onCtlsChanged();
 }
 
 void Box_WSPRSettings::extendedWsprCtls_updateStatus()
 {
-	bool connValid = deviceModel && deviceModel->conn && deviceModel->conn->isValid();
-	bool isSupported = deviceModel->info.firmwareVersion.supports_extendedWspr();
+	bool connValid = isConnValid();
+	bool isSupported = connValid && deviceModel->info.firmwareVersion.supports_extendedWspr();
 	ctl_forceExtendedWspr->Enable(isSupported);
-	if (isSupported || !connValid)
+	if (!connValid || !isSupported)
 	{
-		ctl_forceExtendedWspr->SetLabelText("Always transmit 6 character locator");
+		ctl_forceExtendedWspr->Show(false);
 	}
 	else
 	{
-		ctl_forceExtendedWspr->SetLabelText("Extended WSPR unsupported, update firmware");
+		ctl_forceExtendedWspr->SetLabelText("Transmit 6 character locator");
+		ctl_forceExtendedWspr->Show(isLongLocator() && !isCompoundCallsign());
 	}
+	onCtlsChanged();
 }
 
 void Box_WSPRSettings::OnBtnStats(wxCommandEvent &event)

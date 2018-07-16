@@ -13,6 +13,8 @@
 
 #include <wx/gbsizer.h>
 
+class wxHyperlinkCtrl;
+
 class Box_WSPRSettings : public wxPanel
 {
 protected:
@@ -30,6 +32,7 @@ protected:
 	wxCheckBox *ctl_cwId_enable;
 	wxTextCtrl *ctl_cwId_callsign;
 	wxCheckBox *ctl_forceExtendedWspr;
+	wxHyperlinkCtrl *ctl_extendedWsprInfoLink;
 	wxStaticText *msg_wsprMsgTypes;
 	std::string statsUrl;
 	wxTextCtrl *ctl_statsUrl;
@@ -70,6 +73,9 @@ public:
 	void getFields(DeviceConfig &cfg);
 	void setFields(const DeviceConfig &cfg);
 	bool validate();
+	bool isLongLocator();
+	bool isCompoundCallsign();
+	bool isConnValid();
 };
 
 
